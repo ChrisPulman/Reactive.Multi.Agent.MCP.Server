@@ -1,0 +1,26 @@
+{
+  "id": "avalonia",
+  "domain": "avalonia",
+  "category": "implementation",
+  "displayName": "Avalonia Agent",
+  "summary": "Owns Avalonia-specific cross-platform UI work and related implementation guidance.",
+  "role": "Avalonia UI, cross-platform desktop implementation, and XAML-style composition",
+  "toolName": "multiagent_avalonia_agent",
+  "defaultSkills": [
+    "Avalonia",
+    "cross-platform desktop",
+    "xaml ui",
+    "desktop composition"
+  ],
+  "defaultTools": [
+    "avalonia views",
+    "cross-platform desktop artifacts",
+    "ui notes"
+  ],
+  "routingKeywords": [
+    "avalonia",
+    "cross-platform desktop",
+    "avaloniaui"
+  ],
+  "completionContract": "Return Avalonia-specific artifacts appropriate for a cross-platform desktop stack."
+}

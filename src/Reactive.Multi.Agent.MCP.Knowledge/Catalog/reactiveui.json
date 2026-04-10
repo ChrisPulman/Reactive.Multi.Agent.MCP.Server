@@ -1,0 +1,28 @@
+{
+  "id": "reactiveui",
+  "domain": "reactiveui",
+  "category": "implementation",
+  "displayName": "ReactiveUI Agent",
+  "summary": "Owns ReactiveUI-specific guidance, patterns, and implementation work.",
+  "role": "ReactiveUI platform patterns, bindings, view models, and ecosystem-specific implementation",
+  "toolName": "multiagent_reactiveui_agent",
+  "defaultSkills": [
+    "ReactiveUI",
+    "Rx MVVM",
+    "source generators",
+    "ReactiveCommand"
+  ],
+  "defaultTools": [
+    "viewmodels",
+    "bindings",
+    "ReactiveUI design notes"
+  ],
+  "routingKeywords": [
+    "reactiveui",
+    "reactive command",
+    "whenactivated",
+    "viewmodel",
+    "binding"
+  ],
+  "completionContract": "Return ReactiveUI-specific artifacts that follow current ecosystem guidance."
+}

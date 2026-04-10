@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Reactive.Multi.Agent.MCP.Knowledge</AssemblyName>
+    <RootNamespace>Reactive.Multi.Agent.MCP.Knowledge</RootNamespace>
+    <PackageId>CP.Reactive.Multi.Agent.MCP.Knowledge</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Reactive.Multi.Agent.MCP.Core\Reactive.Multi.Agent.MCP.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Catalog\*.json" />
+  </ItemGroup>
+</Project>

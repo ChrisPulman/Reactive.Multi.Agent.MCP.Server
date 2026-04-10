@@ -1,0 +1,27 @@
+{
+  "id": "blazor",
+  "domain": "blazor",
+  "category": "implementation",
+  "displayName": "Blazor Agent",
+  "summary": "Owns Blazor-specific web UI implementation and interactive component guidance.",
+  "role": "Blazor components, Razor pages, and web application implementation",
+  "toolName": "multiagent_blazor_agent",
+  "defaultSkills": [
+    "Blazor",
+    "Razor components",
+    "web ui",
+    ".NET web"
+  ],
+  "defaultTools": [
+    "razor components",
+    "web project files",
+    "routing/state artifacts"
+  ],
+  "routingKeywords": [
+    "blazor",
+    "razor",
+    "webassembly",
+    "server-side blazor"
+  ],
+  "completionContract": "Return Blazor-specific implementation artifacts suitable for web delivery."
+}

@@ -1,0 +1,29 @@
+{
+  "id": "migration",
+  "domain": "migration",
+  "category": "strategy",
+  "displayName": "Migration Agent",
+  "summary": "Owns modernization plans, legacy-to-modern transitions, and upgrade sequencing.",
+  "role": "Migration planning, modernization sequencing, and upgrade risk reduction",
+  "toolName": "multiagent_migration_agent",
+  "defaultSkills": [
+    "migration planning",
+    "legacy analysis",
+    "upgrade sequencing",
+    "compatibility assessment"
+  ],
+  "defaultTools": [
+    "migration plans",
+    "upgrade checklists",
+    "risk logs"
+  ],
+  "routingKeywords": [
+    "migration",
+    "upgrade",
+    "modernize",
+    "legacy",
+    "port",
+    "refactor"
+  ],
+  "completionContract": "Return a migration plan with ordered steps, risks, and validation checkpoints."
+}

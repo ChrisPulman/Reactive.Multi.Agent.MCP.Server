@@ -1,0 +1,28 @@
+{
+  "id": "maui",
+  "domain": "maui",
+  "category": "implementation",
+  "displayName": "MAUI Agent",
+  "summary": "Owns MAUI-specific mobile/cross-platform UI work and project guidance.",
+  "role": "MAUI mobile and desktop UI implementation, project setup, and platform guidance",
+  "toolName": "multiagent_maui_agent",
+  "defaultSkills": [
+    "MAUI",
+    "mobile ui",
+    "cross-platform app",
+    ".NET MAUI"
+  ],
+  "defaultTools": [
+    "maui views",
+    "platform setup",
+    "mobile project files"
+  ],
+  "routingKeywords": [
+    "maui",
+    ".net maui",
+    "mobile app",
+    "ios",
+    "android"
+  ],
+  "completionContract": "Return MAUI-specific artifacts and platform assumptions for the requested feature slice."
+}

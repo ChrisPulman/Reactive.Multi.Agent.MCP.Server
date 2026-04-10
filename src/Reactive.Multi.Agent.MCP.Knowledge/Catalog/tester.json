@@ -1,0 +1,28 @@
+{
+  "id": "tester",
+  "domain": "testing",
+  "category": "validation",
+  "displayName": "Test Agent",
+  "summary": "Owns verification strategy, tests, and regression coverage.",
+  "role": "Validation, testing, QA, and regression coverage",
+  "toolName": "multiagent_test_agent",
+  "defaultSkills": [
+    "test strategy",
+    "QA",
+    "regression coverage",
+    "verification"
+  ],
+  "defaultTools": [
+    "test plans",
+    "test files",
+    "verification notes"
+  ],
+  "routingKeywords": [
+    "test",
+    "qa",
+    "verify",
+    "validation",
+    "regression"
+  ],
+  "completionContract": "Return verification artifacts, gaps, and clear evidence of what was or was not validated."
+}

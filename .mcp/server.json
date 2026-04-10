@@ -1,0 +1,10 @@
+{
+  "name": "reactive-multi-agent-mcp-server",
+  "type": "stdio",
+  "command": "dotnet",
+  "args": [
+    "run",
+    "--project",
+    "D:/Projects/Github/chrispulman/Reactive.Multi.Agent.MCP.Server/src/Reactive.Multi.Agent.MCP.Server/Reactive.Multi.Agent.MCP.Server.csproj"
+  ]
+}

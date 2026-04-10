@@ -1,0 +1,30 @@
+{
+  "id": "ci",
+  "domain": "ci",
+  "category": "automation",
+  "displayName": "CI Agent",
+  "summary": "Owns CI/CD pipelines, workflows, package/release automation, and build verification setup.",
+  "role": "CI/CD, workflows, package publishing, and release automation",
+  "toolName": "multiagent_ci_agent",
+  "defaultSkills": [
+    "GitHub Actions",
+    "CI",
+    "release automation",
+    "package publishing"
+  ],
+  "defaultTools": [
+    "workflow files",
+    "release notes",
+    "automation scripts"
+  ],
+  "routingKeywords": [
+    "ci",
+    "pipeline",
+    "github actions",
+    "workflow",
+    "publish",
+    "release",
+    "package"
+  ],
+  "completionContract": "Return automation artifacts with clear environment, secret, and publishing assumptions."
+}

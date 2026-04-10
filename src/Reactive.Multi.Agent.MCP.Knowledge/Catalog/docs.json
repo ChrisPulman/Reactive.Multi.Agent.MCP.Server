@@ -1,0 +1,29 @@
+{
+  "id": "docs",
+  "domain": "documentation",
+  "category": "documentation",
+  "displayName": "Docs Agent",
+  "summary": "Owns README content, guides, examples, onboarding, and usage documentation.",
+  "role": "Documentation, onboarding, examples, and user-facing instructions",
+  "toolName": "multiagent_docs_agent",
+  "defaultSkills": [
+    "technical writing",
+    "README authoring",
+    "examples",
+    "installation guidance"
+  ],
+  "defaultTools": [
+    "markdown docs",
+    "guides",
+    "examples"
+  ],
+  "routingKeywords": [
+    "docs",
+    "documentation",
+    "readme",
+    "guide",
+    "install",
+    "usage"
+  ],
+  "completionContract": "Return publishable docs artifacts and any missing information needed for final polish."
+}

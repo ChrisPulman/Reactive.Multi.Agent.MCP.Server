@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Reactive.Multi.Agent.MCP.Tests</AssemblyName>
+    <RootNamespace>Reactive.Multi.Agent.MCP.Tests</RootNamespace>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TUnit" />
+    <PackageReference Include="TUnit.Assertions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Reactive.Multi.Agent.MCP.Core\Reactive.Multi.Agent.MCP.Core.csproj" />
+    <ProjectReference Include="..\Reactive.Multi.Agent.MCP.Knowledge\Reactive.Multi.Agent.MCP.Knowledge.csproj" />
+    <ProjectReference Include="..\Reactive.Multi.Agent.MCP.Server\Reactive.Multi.Agent.MCP.Server.csproj" />
+  </ItemGroup>
+</Project>

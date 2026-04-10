@@ -1,0 +1,29 @@
+{
+  "id": "architect",
+  "domain": "architecture",
+  "category": "strategy",
+  "displayName": "Architect Agent",
+  "summary": "Owns decomposition, system design, boundaries, and cross-agent coordination framing.",
+  "role": "Architecture, planning, dependency shaping, and system decomposition",
+  "toolName": "multiagent_architect_agent",
+  "defaultSkills": [
+    "system design",
+    "dependency mapping",
+    "planning",
+    "trade-off analysis"
+  ],
+  "defaultTools": [
+    "design outlines",
+    "task graphs",
+    "integration notes"
+  ],
+  "routingKeywords": [
+    "architecture",
+    "design",
+    "plan",
+    "decompose",
+    "system",
+    "integration"
+  ],
+  "completionContract": "Return a design-oriented outcome with explicit boundaries, assumptions, and downstream handoff notes."
+}

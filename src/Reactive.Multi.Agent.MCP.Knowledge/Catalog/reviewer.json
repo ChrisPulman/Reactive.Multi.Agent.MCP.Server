@@ -1,0 +1,28 @@
+{
+  "id": "reviewer",
+  "domain": "review",
+  "category": "validation",
+  "displayName": "Reviewer Agent",
+  "summary": "Owns review, critique, security concerns, and readiness decisions.",
+  "role": "Review, critique, risk analysis, security, and readiness checks",
+  "toolName": "multiagent_reviewer_agent",
+  "defaultSkills": [
+    "code review",
+    "security review",
+    "risk analysis",
+    "readiness assessment"
+  ],
+  "defaultTools": [
+    "review findings",
+    "risk logs",
+    "approval notes"
+  ],
+  "routingKeywords": [
+    "review",
+    "critique",
+    "security",
+    "readiness",
+    "hardening"
+  ],
+  "completionContract": "Return a review verdict with critical issues, important issues, and go/no-go notes."
+}

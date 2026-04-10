@@ -1,0 +1,27 @@
+{
+  "id": "winforms",
+  "domain": "winforms",
+  "category": "implementation",
+  "displayName": "WinForms Agent",
+  "summary": "Owns WinForms-specific UI work and Windows forms implementation guidance.",
+  "role": "WinForms UI, form lifecycle, and Windows desktop implementation",
+  "toolName": "multiagent_winforms_agent",
+  "defaultSkills": [
+    "WinForms",
+    "forms",
+    "desktop UI",
+    ".NET desktop"
+  ],
+  "defaultTools": [
+    "form files",
+    "designer-compatible code",
+    "desktop event wiring"
+  ],
+  "routingKeywords": [
+    "winforms",
+    "windows forms",
+    "form",
+    "desktop ui"
+  ],
+  "completionContract": "Return WinForms artifacts and implementation notes that fit the requested scope."
+}

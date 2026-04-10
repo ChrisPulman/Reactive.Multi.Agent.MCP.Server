@@ -1,0 +1,30 @@
+{
+  "id": "csharp",
+  "domain": "csharp",
+  "category": "implementation",
+  "displayName": "C# Agent",
+  "summary": "Owns general C# and .NET implementation work when no narrower UI/domain agent is a better fit.",
+  "role": "C#/.NET implementation, solution wiring, and general application code generation",
+  "toolName": "multiagent_csharp_agent",
+  "defaultSkills": [
+    "C#",
+    ".NET 10",
+    "project scaffolding",
+    "implementation"
+  ],
+  "defaultTools": [
+    "source files",
+    "solution wiring",
+    "project files"
+  ],
+  "routingKeywords": [
+    "c#",
+    "csharp",
+    ".net",
+    "dotnet",
+    "implementation",
+    "generate code",
+    "project"
+  ],
+  "completionContract": "Return concrete C# artifacts and implementation notes suitable for downstream validation."
+}

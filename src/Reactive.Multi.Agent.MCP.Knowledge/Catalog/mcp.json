@@ -1,0 +1,29 @@
+{
+  "id": "mcp",
+  "domain": "mcp",
+  "category": "implementation",
+  "displayName": "MCP Agent",
+  "summary": "Owns MCP server shape, tool/resource/prompt design, and protocol-specific implementation.",
+  "role": "Model Context Protocol server design, tooling surface, and host integration",
+  "toolName": "multiagent_mcp_agent",
+  "defaultSkills": [
+    "MCP",
+    "JSON-RPC tooling",
+    "tool surface design",
+    "protocol integration"
+  ],
+  "defaultTools": [
+    "tool schemas",
+    "resource definitions",
+    "prompt definitions"
+  ],
+  "routingKeywords": [
+    "mcp",
+    "model context protocol",
+    "tool",
+    "resource",
+    "prompt",
+    "stdio server"
+  ],
+  "completionContract": "Return MCP-specific artifacts and protocol-aware implementation guidance."
+}

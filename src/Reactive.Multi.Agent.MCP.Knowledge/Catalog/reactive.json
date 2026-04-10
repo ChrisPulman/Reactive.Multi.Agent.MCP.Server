@@ -1,0 +1,29 @@
+{
+  "id": "reactive",
+  "domain": "reactive",
+  "category": "implementation",
+  "displayName": "Reactive Agent",
+  "summary": "Owns Rx-style orchestration, stream pipelines, and reactive composition decisions.",
+  "role": "Reactive architecture, stream composition, and concurrency-friendly event flow design",
+  "toolName": "multiagent_reactive_agent",
+  "defaultSkills": [
+    "Reactive Extensions",
+    "stream composition",
+    "task pipelines",
+    "concurrency"
+  ],
+  "defaultTools": [
+    "reactive design notes",
+    "stream pipelines",
+    "event flow artifacts"
+  ],
+  "routingKeywords": [
+    "reactive",
+    "rx",
+    "stream",
+    "observable",
+    "channels",
+    "dataflow"
+  ],
+  "completionContract": "Return reactive design artifacts and implementation notes that fit a stream-driven architecture."
+}

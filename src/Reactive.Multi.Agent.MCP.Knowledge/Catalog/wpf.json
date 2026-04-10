@@ -1,0 +1,27 @@
+{
+  "id": "wpf",
+  "domain": "wpf",
+  "category": "implementation",
+  "displayName": "WPF Agent",
+  "summary": "Owns WPF-specific UI work, desktop wiring, and WPF-tailored implementation guidance.",
+  "role": "WPF desktop UI, XAML, bindings, and Windows desktop implementation",
+  "toolName": "multiagent_wpf_agent",
+  "defaultSkills": [
+    "WPF",
+    "XAML",
+    "desktop UI",
+    "bindings"
+  ],
+  "defaultTools": [
+    "xaml files",
+    "desktop view models",
+    "window/navigation notes"
+  ],
+  "routingKeywords": [
+    "wpf",
+    "xaml",
+    "window",
+    "desktop"
+  ],
+  "completionContract": "Return WPF-specific artifacts and notes appropriate for Windows desktop implementation."
+}
