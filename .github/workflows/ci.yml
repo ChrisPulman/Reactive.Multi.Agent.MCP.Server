@@ -111,32 +111,3 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "${{ steps.nbgv.outputs.SemVer2 }}" --repo "${{ github.repository }}" --title "${{ steps.nbgv.outputs.SemVer2 }}" --notes-file release-notes.md
-
-
-
-
-
-name: ci
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-
-jobs:
-  build-and-test:
-    runs-on: windows-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 10.0.x
-
-      - name: Build
-        run: dotnet build src/Reactive.Multi.Agent.MCP.Server.slnx
-
-      - name: Test
-        run: dotnet test src/Reactive.Multi.Agent.MCP.Server.slnx
