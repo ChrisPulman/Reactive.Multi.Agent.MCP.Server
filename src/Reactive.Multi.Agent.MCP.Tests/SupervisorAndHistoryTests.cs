@@ -4,6 +4,8 @@ using Reactive.Multi.Agent.MCP.Core.Models;
 using Reactive.Multi.Agent.MCP.Core.Persistence;
 using Reactive.Multi.Agent.MCP.Core.Services;
 using Reactive.Multi.Agent.MCP.Knowledge.Services;
+using Reactive.Multi.Agent.MCP.Server.Tools;
+using System.Text.Json;
 
 namespace Reactive.Multi.Agent.MCP.Tests;
 
@@ -253,6 +255,35 @@ public class SupervisorAndHistoryTests
         var history = orchestration.GetMaintenanceHistory(session.SessionId, 2);
         await Assert.That(history.Count).IsEqualTo(2);
         await Assert.That(history[1].RecordedAtUtc).IsGreaterThanOrEqualTo(history[0].RecordedAtUtc);
+    }
+
+
+    [Test]
+    public async Task OrchestrateRequest_Returns_Compact_Client_Safe_Payload()
+    {
+        var options = new ReactiveMultiAgentOptions { StateRootPath = Path.Combine(Path.GetTempPath(), "reactive-multi-agent-mcp-compact-payload-tests", Guid.NewGuid().ToString("N")) };
+        using var store = new SqliteOrchestrationSessionStore(options);
+        IAgentCatalog catalog = new EmbeddedAgentCatalog();
+        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
+        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+
+        var json = OrchestratorTools.OrchestrateRequest(
+            orchestration,
+            "Build a Blazor app with CI, docs, tests, and an MCP integration layer",
+            constraints: "net10 only,no external services",
+            desiredArtifacts: "source files,tests,docs",
+            preferredAgents: "csharp,ci,docs,mcp",
+            maxParallelAgents: 4);
+
+        using var document = JsonDocument.Parse(json);
+        var root = document.RootElement;
+
+        await Assert.That(root.TryGetProperty("sessionId", out _)).IsTrue();
+        await Assert.That(root.TryGetProperty("plan", out var plan)).IsTrue();
+        await Assert.That(plan.TryGetProperty("tasks", out _)).IsTrue();
+        await Assert.That(root.TryGetProperty("nextStep", out _)).IsTrue();
+        await Assert.That(json.Length).IsLessThan(12000);
+        await Assert.That(root.TryGetProperty("session", out _)).IsFalse();
     }
 
 }
