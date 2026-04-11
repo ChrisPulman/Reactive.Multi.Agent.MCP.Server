@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <AssemblyName>Reactive.Multi.Agent.MCP.Server</AssemblyName>
+    <AssemblyName>CP.Reactive.Multi.Agent.MCP.Server</AssemblyName>
     <RootNamespace>Reactive.Multi.Agent.MCP.Server</RootNamespace>
     <PackageId>CP.Reactive.Multi.Agent.MCP.Server</PackageId>
     <Title>Reactive Multi Agent MCP Server</Title>
@@ -25,8 +25,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Reactive.Multi.Agent.MCP.Core\Reactive.Multi.Agent.MCP.Core.csproj" />
-    <ProjectReference Include="..\Reactive.Multi.Agent.MCP.Knowledge\Reactive.Multi.Agent.MCP.Knowledge.csproj" />
+    <ProjectReference Include="..\Reactive.Multi.Agent.MCP.Core\CP.Reactive.Multi.Agent.MCP.Core.csproj" />
+    <ProjectReference Include="..\Reactive.Multi.Agent.MCP.Knowledge\CP.Reactive.Multi.Agent.MCP.Knowledge.csproj" />
   </ItemGroup>
 
   <ItemGroup>

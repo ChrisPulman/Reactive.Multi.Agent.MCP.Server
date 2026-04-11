@@ -14,8 +14,8 @@
     <File Path="../testconfig.json" />
     <File Path="../version.json" />
   </Folder>
-  <Project Path="Reactive.Multi.Agent.MCP.Core/Reactive.Multi.Agent.MCP.Core.csproj" />
-  <Project Path="Reactive.Multi.Agent.MCP.Knowledge/Reactive.Multi.Agent.MCP.Knowledge.csproj" />
-  <Project Path="Reactive.Multi.Agent.MCP.Server/Reactive.Multi.Agent.MCP.Server.csproj" />
+  <Project Path="Reactive.Multi.Agent.MCP.Core/CP.Reactive.Multi.Agent.MCP.Core.csproj" />
+  <Project Path="Reactive.Multi.Agent.MCP.Knowledge/CP.Reactive.Multi.Agent.MCP.Knowledge.csproj" />
+  <Project Path="Reactive.Multi.Agent.MCP.Server/CP.Reactive.Multi.Agent.MCP.Server.csproj" />
   <Project Path="Reactive.Multi.Agent.MCP.Tests/Reactive.Multi.Agent.MCP.Tests.csproj" />
 </Solution>

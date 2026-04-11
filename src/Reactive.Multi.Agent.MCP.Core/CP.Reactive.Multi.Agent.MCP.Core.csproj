@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <AssemblyName>Reactive.Multi.Agent.MCP.Core</AssemblyName>
+    <AssemblyName>CP.Reactive.Multi.Agent.MCP.Core</AssemblyName>
     <RootNamespace>Reactive.Multi.Agent.MCP.Core</RootNamespace>
     <PackageId>CP.Reactive.Multi.Agent.MCP.Core</PackageId>
   </PropertyGroup>
