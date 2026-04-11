@@ -91,6 +91,8 @@ public sealed class WorkerAgentTools
         => McpSafeExecutor.ExecuteJson($"multiagent_{agentId}_agent", () =>
         {
             ArgumentNullException.ThrowIfNull(orchestrationService);
+            ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(taskId);
 
             if (failureKind != AgentFailureKind.None)
             {

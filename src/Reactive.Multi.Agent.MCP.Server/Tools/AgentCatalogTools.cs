@@ -44,6 +44,7 @@ public sealed class AgentCatalogTools
         => McpSafeExecutor.ExecuteJson("multiagent_agent_catalog_get", () =>
         {
             ArgumentNullException.ThrowIfNull(agentCatalog);
+            ArgumentException.ThrowIfNullOrWhiteSpace(id);
 
             var profile = agentCatalog.GetById(id) ?? throw new InvalidOperationException($"Unknown agent id '{id}'.");
             return profile;

@@ -13,6 +13,7 @@ public sealed class OrchestratorTools
         => McpSafeExecutor.ExecuteJson("multiagent_orchestrate_request", () =>
         {
             ArgumentNullException.ThrowIfNull(orchestrationService);
+            ArgumentException.ThrowIfNullOrWhiteSpace(userRequest);
             var session = orchestrationService.CreateSession(OrchestrationRequest.FromStrings(userRequest, constraints, desiredArtifacts, preferredAgents, maxParallelAgents));
             var summary = orchestrationService.FinalizeSession(session.SessionId);
             return BuildStartupPayload(session, summary);
@@ -23,6 +24,7 @@ public sealed class OrchestratorTools
         => McpSafeExecutor.ExecuteJson("multiagent_session_status", () =>
         {
             ArgumentNullException.ThrowIfNull(orchestrationService);
+            ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
             var session = orchestrationService.GetSession(sessionId)
                 ?? throw new InvalidOperationException($"Unknown orchestration session '{sessionId}'.");
             var summary = orchestrationService.FinalizeSession(sessionId);
@@ -45,6 +47,7 @@ public sealed class OrchestratorTools
         => McpSafeExecutor.ExecuteJson("multiagent_finalize_session", () =>
         {
             ArgumentNullException.ThrowIfNull(orchestrationService);
+            ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
             var summary = orchestrationService.FinalizeSession(sessionId);
             return new
             {
@@ -70,6 +73,9 @@ public sealed class OrchestratorTools
         => McpSafeExecutor.ExecuteJson("multiagent_resume_task", () =>
         {
             ArgumentNullException.ThrowIfNull(orchestrationService);
+            ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(taskId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(agentId);
             return orchestrationService.ResumeTask(sessionId, taskId, agentId);
         });
 
@@ -78,6 +84,7 @@ public sealed class OrchestratorTools
         => McpSafeExecutor.ExecuteJson("multiagent_resume_orchestration", () =>
         {
             ArgumentNullException.ThrowIfNull(orchestrationService);
+            ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
             var session = orchestrationService.ResumeOrchestration(sessionId);
             return new
             {
@@ -92,6 +99,8 @@ public sealed class OrchestratorTools
         => McpSafeExecutor.ExecuteJson("multiagent_update_supervisor_action", () =>
         {
             ArgumentNullException.ThrowIfNull(orchestrationService);
+            ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(actionId);
             var session = orchestrationService.UpdateSupervisorAction(sessionId, actionId, state);
             var action = session.SupervisorActions.First(candidate => candidate.ActionId.Equals(actionId, StringComparison.OrdinalIgnoreCase));
             return new
@@ -110,6 +119,7 @@ public sealed class OrchestratorTools
         => McpSafeExecutor.ExecuteJson("multiagent_apply_supervisor_action_escalation", () =>
         {
             ArgumentNullException.ThrowIfNull(orchestrationService);
+            ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
             var session = orchestrationService.ApplySupervisorActionEscalation(sessionId, staleAfterMinutes, criticalAfterMinutes);
             return new
             {
@@ -129,6 +139,7 @@ public sealed class OrchestratorTools
         => McpSafeExecutor.ExecuteJson("multiagent_record_heartbeat", () =>
         {
             ArgumentNullException.ThrowIfNull(orchestrationService);
+            ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
             var session = orchestrationService.RecordHeartbeat(sessionId, taskId, agentId, actionId, source);
             return new
             {
@@ -146,6 +157,7 @@ public sealed class OrchestratorTools
         => McpSafeExecutor.ExecuteJson("multiagent_run_maintenance_sweep", () =>
         {
             ArgumentNullException.ThrowIfNull(orchestrationService);
+            ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
             var session = orchestrationService.RunMaintenanceSweep(sessionId, silentHeartbeatMinutes, staleTaskMinutes, staleActionMinutes, criticalActionMinutes);
             var supervisor = orchestrationService.GetSupervisorStatus(sessionId, staleTaskMinutes);
             return new
@@ -164,6 +176,7 @@ public sealed class OrchestratorTools
         => McpSafeExecutor.ExecuteJson("multiagent_get_maintenance_report", () =>
         {
             ArgumentNullException.ThrowIfNull(orchestrationService);
+            ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
             return orchestrationService.GetMaintenanceReport(sessionId, silentHeartbeatMinutes, staleTaskMinutes, staleActionMinutes, criticalActionMinutes, autoApplyPolicies, networkRecovered);
         });
 
@@ -172,6 +185,7 @@ public sealed class OrchestratorTools
         => McpSafeExecutor.ExecuteJson("multiagent_get_maintenance_history", () =>
         {
             ArgumentNullException.ThrowIfNull(orchestrationService);
+            ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
             return orchestrationService.GetMaintenanceHistory(sessionId, limit);
         });
 
@@ -180,6 +194,9 @@ public sealed class OrchestratorTools
         => McpSafeExecutor.ExecuteJson("multiagent_apply_automatic_policy", () =>
         {
             ArgumentNullException.ThrowIfNull(orchestrationService);
+            ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(taskId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(agentId);
             return orchestrationService.ApplyAutomaticPolicy(sessionId, taskId, agentId, currentEstimatedTokens, remainingSubscriptionTokens, networkRecovered);
         });
 
@@ -196,6 +213,7 @@ public sealed class OrchestratorTools
         => McpSafeExecutor.ExecuteJson("multiagent_supervisor_status", () =>
         {
             ArgumentNullException.ThrowIfNull(orchestrationService);
+            ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
             return BuildSupervisorOverview(orchestrationService.GetSupervisorStatus(sessionId, stalledAfterMinutes));
         });
 
@@ -204,6 +222,7 @@ public sealed class OrchestratorTools
         => McpSafeExecutor.ExecuteJson("multiagent_supervisor_plan", () =>
         {
             ArgumentNullException.ThrowIfNull(orchestrationService);
+            ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
             var plan = orchestrationService.GetSupervisorActionPlan(sessionId, stalledAfterMinutes, autoApplyPolicies, networkRecovered);
             return new
             {
