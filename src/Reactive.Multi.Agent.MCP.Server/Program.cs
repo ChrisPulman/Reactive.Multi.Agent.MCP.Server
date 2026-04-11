@@ -11,6 +11,7 @@ using Reactive.Multi.Agent.MCP.Knowledge.Services;
 using Reactive.Multi.Agent.MCP.Server.Prompts;
 using Reactive.Multi.Agent.MCP.Server.Resources;
 using Reactive.Multi.Agent.MCP.Server.Tools;
+using System.Diagnostics;
 
 namespace Reactive.Multi.Agent.MCP.Server;
 
@@ -19,9 +20,10 @@ public static class Program
     public static IHost CreateHost(string[] args)
     {
         var builder = Host.CreateApplicationBuilder(args);
+        builder.Logging.ClearProviders();
         builder.Logging.AddConsole(options => options.LogToStandardErrorThreshold = LogLevel.Trace);
 
-        builder.Services.AddSingleton(new ReactiveMultiAgentOptions());
+        builder.Services.AddSingleton(CreateOptions());
         builder.Services.AddSingleton<IAgentCatalog, EmbeddedAgentCatalog>();
         builder.Services.AddSingleton<IRequestDecomposer, RequestDecomposer>();
         builder.Services.AddSingleton<IOrchestrationSessionStore, SqliteOrchestrationSessionStore>();
@@ -65,6 +67,62 @@ public static class Program
         return builder.Build();
     }
 
+    public static ReactiveMultiAgentOptions CreateOptions()
+    {
+        var stateRoot = Environment.GetEnvironmentVariable("REACTIVE_MULTI_AGENT_MCP_STATE_ROOT");
+        var packageId = Environment.GetEnvironmentVariable("REACTIVE_MULTI_AGENT_MCP_PACKAGE_ID");
+        var serverId = Environment.GetEnvironmentVariable("REACTIVE_MULTI_AGENT_MCP_SERVER_ID");
+
+        return new ReactiveMultiAgentOptions
+        {
+            StateRootPath = string.IsNullOrWhiteSpace(stateRoot)
+                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ReactiveMultiAgentMcp")
+                : stateRoot,
+            PackageId = string.IsNullOrWhiteSpace(packageId)
+                ? "CP.Reactive.Multi.Agent.MCP.Server"
+                : packageId,
+            ServerId = string.IsNullOrWhiteSpace(serverId)
+                ? "io.github.chrispulman/reactive-multi-agent-mcp-server"
+                : serverId,
+        };
+    }
+
     public static async Task Main(string[] args)
-        => await CreateHost(args).RunAsync();
+    {
+        AppDomain.CurrentDomain.UnhandledException += static (_, eventArgs) =>
+        {
+            try
+            {
+                Console.Error.WriteLine($"fatal.unhandled_exception={eventArgs.ExceptionObject}");
+            }
+            catch
+            {
+                // Avoid crash-looping while trying to report a crash.
+            }
+        };
+
+        TaskScheduler.UnobservedTaskException += static (_, eventArgs) =>
+        {
+            try
+            {
+                Console.Error.WriteLine($"fatal.unobserved_task_exception={eventArgs.Exception}");
+            }
+            catch
+            {
+                // Avoid crash-looping while trying to report a crash.
+            }
+
+            eventArgs.SetObserved();
+        };
+
+        try
+        {
+            await CreateHost(args).RunAsync();
+        }
+        catch (Exception ex) when (!Debugger.IsAttached)
+        {
+            Console.Error.WriteLine($"fatal.host_termination={ex}");
+            Environment.ExitCode = 1;
+        }
+    }
 }

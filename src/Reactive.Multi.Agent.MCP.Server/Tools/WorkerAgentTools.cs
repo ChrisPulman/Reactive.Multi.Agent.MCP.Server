@@ -1,7 +1,7 @@
 using ModelContextProtocol.Server;
 using Reactive.Multi.Agent.MCP.Core.Abstractions;
 using Reactive.Multi.Agent.MCP.Core.Models;
-using Reactive.Multi.Agent.MCP.Server.Serialization;
+using Reactive.Multi.Agent.MCP.Server.Infrastructure;
 using System.ComponentModel;
 
 namespace Reactive.Multi.Agent.MCP.Server.Tools;
@@ -88,38 +88,37 @@ public sealed class WorkerAgentTools
         string? failureReason,
         int? currentEstimatedTokens,
         int? remainingSubscriptionTokens)
-    {
-        ArgumentNullException.ThrowIfNull(orchestrationService);
-
-        if (failureKind != AgentFailureKind.None)
+        => McpSafeExecutor.ExecuteJson($"multiagent_{agentId}_agent", () =>
         {
-            return JsonOutput.Serialize(orchestrationService.ReportTaskFailure(
-                sessionId,
-                taskId,
-                agentId,
-                failureKind,
-                string.IsNullOrWhiteSpace(failureReason) ? failureKind.ToString() : failureReason,
-                memoryReloadItems,
-                currentEstimatedTokens,
-                remainingSubscriptionTokens));
-        }
+            ArgumentNullException.ThrowIfNull(orchestrationService);
 
-        if (createCheckpoint)
-        {
-            return JsonOutput.Serialize(orchestrationService.RecordCheckpoint(
-                sessionId,
-                taskId,
-                agentId,
-                string.IsNullOrWhiteSpace(checkpointSummary) ? "Checkpoint recorded." : checkpointSummary,
-                memoryReloadItems,
-                currentEstimatedTokens,
-                remainingSubscriptionTokens));
-        }
+            if (failureKind != AgentFailureKind.None)
+            {
+                return orchestrationService.ReportTaskFailure(
+                    sessionId,
+                    taskId,
+                    agentId,
+                    failureKind,
+                    string.IsNullOrWhiteSpace(failureReason) ? failureKind.ToString() : failureReason,
+                    memoryReloadItems,
+                    currentEstimatedTokens,
+                    remainingSubscriptionTokens);
+            }
 
-        var packet = string.IsNullOrWhiteSpace(workSummary) && (artifacts is null || artifacts.Length == 0) && (handoffItems is null || handoffItems.Length == 0) && (risks is null || risks.Length == 0) && !markComplete
-            ? orchestrationService.ActivateAgentTask(sessionId, taskId, agentId, additionalContext, workLog)
-            : orchestrationService.RecordAgentResult(sessionId, taskId, agentId, workSummary, artifacts, handoffItems, risks, markComplete);
+            if (createCheckpoint)
+            {
+                return orchestrationService.RecordCheckpoint(
+                    sessionId,
+                    taskId,
+                    agentId,
+                    string.IsNullOrWhiteSpace(checkpointSummary) ? "Checkpoint recorded." : checkpointSummary,
+                    memoryReloadItems,
+                    currentEstimatedTokens,
+                    remainingSubscriptionTokens);
+            }
 
-        return JsonOutput.Serialize(packet);
-    }
+            return string.IsNullOrWhiteSpace(workSummary) && (artifacts is null || artifacts.Length == 0) && (handoffItems is null || handoffItems.Length == 0) && (risks is null || risks.Length == 0) && !markComplete
+                ? orchestrationService.ActivateAgentTask(sessionId, taskId, agentId, additionalContext, workLog)
+                : orchestrationService.RecordAgentResult(sessionId, taskId, agentId, workSummary, artifacts, handoffItems, risks, markComplete);
+        });
 }

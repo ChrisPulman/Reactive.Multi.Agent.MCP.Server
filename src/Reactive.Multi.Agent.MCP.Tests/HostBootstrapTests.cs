@@ -13,8 +13,10 @@ public class HostBootstrapTests
 
         var agentCatalog = host.Services.GetRequiredService<IAgentCatalog>();
         var orchestration = host.Services.GetRequiredService<IOrchestrationService>();
+        var options = host.Services.GetRequiredService<Reactive.Multi.Agent.MCP.Core.Configuration.ReactiveMultiAgentOptions>();
 
         await Assert.That(agentCatalog.GetAll().Count).IsGreaterThanOrEqualTo(15);
         await Assert.That(orchestration).IsNotNull();
+        await Assert.That(options.StateRootPath).Contains("ReactiveMultiAgentMcp");
     }
 }
