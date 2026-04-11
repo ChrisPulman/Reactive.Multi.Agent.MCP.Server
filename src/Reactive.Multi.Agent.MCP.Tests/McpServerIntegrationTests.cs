@@ -16,10 +16,13 @@ public class McpServerIntegrationTests
             AppContext.BaseDirectory,
             "../../../../Reactive.Multi.Agent.MCP.Server/CP.Reactive.Multi.Agent.MCP.Server.csproj"));
 
+        var configuration = AppContext.BaseDirectory.Contains("Release", StringComparison.OrdinalIgnoreCase)
+            ? "Release" : "Debug";
+
         var transport = new StdioClientTransport(new StdioClientTransportOptions
         {
             Command = "dotnet",
-            Arguments = new List<string> { "run", "--no-build", "--project", serverCsproj },
+            Arguments = new List<string> { "run", "--no-build", "--configuration", configuration, "--project", serverCsproj },
             EnvironmentVariables = new Dictionary<string, string>
             {
                 ["REACTIVE_MULTI_AGENT_MCP_STATE_ROOT"] = stateDir,
