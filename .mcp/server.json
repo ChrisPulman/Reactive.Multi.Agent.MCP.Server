@@ -1,10 +1,44 @@
 {
-  "name": "reactive-multi-agent-mcp-server",
-  "type": "stdio",
-  "command": "dotnet",
-  "args": [
-    "run",
-    "--project",
-    "D:/Projects/Github/chrispulman/Reactive.Multi.Agent.MCP.Server/src/Reactive.Multi.Agent.MCP.Server/Reactive.Multi.Agent.MCP.Server.csproj"
-  ]
+    "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+    "name": "io.github.chrispulman/reactive-multi-agent-mcp-server",
+    "title": "Reactive Multi Agent MCP Server",
+    "description": "Reactive Multi Agent MCP Server is a .NET 10 MCP server that gives GitHub Copilot a durable multi-agent orchestration layer for working real solutions with specialist agents.",
+    "version": "0.4.0",
+    "packages": [
+        {
+            "registryType": "nuget",
+            "registryBaseUrl": "https://api.nuget.org/v3/index.json",
+            "identifier": "CP.Reactive.Multi.Agent.MCP.Server",
+            "version": "0.4.0",
+            "runtimeHint": "dnx",
+            "transport": {
+                "type": "stdio"
+            },
+            "environmentVariables": [
+                {
+                    "name": "DOTNET_SKIP_FIRST_TIME_EXPERIENCE",
+                    "value": "1",
+                    "description": "Skip .NET CLI first-time setup experience"
+                },
+                {
+                    "name": "DOTNET_NOLOGO",
+                    "value": "1",
+                    "description": "Suppress .NET logo and startup messages"
+                }
+            ]
+        }
+    ],
+    "repository": {
+        "url": "https://github.com/ChrisPulman/Reactive.Multi.Agent.MCP.Server",
+        "source": "github"
+    },
+    "icons": [
+        {
+            "src": "https://raw.githubusercontent.com/ChrisPulman/Reactive.Multi.Agent.MCP.Server/main/Images/icon.png",
+            "mimeType": "image/png",
+            "sizes": [
+                "991x970"
+            ]
+        }
+    ]
 }
