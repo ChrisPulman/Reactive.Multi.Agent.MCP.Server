@@ -1,12 +1,20 @@
-using Reactive.Multi.Agent.MCP.Core.Abstractions;
-using Reactive.Multi.Agent.MCP.Core.Models;
 using System.Text;
 
 namespace Reactive.Multi.Agent.MCP.Core.Services;
 
+/// <summary>
+/// Provides functionality to decompose a high-level orchestration request into a structured execution plan with
+/// agent-specific tasks and dependency-aware execution waves.
+/// </summary>
+/// <remarks>This class analyzes user requests, splits them into actionable clauses, and assigns each clause to
+/// the most suitable agent profile based on routing keywords and preferences. The resulting plan organizes tasks into
+/// execution waves that respect inter-task dependencies, enabling parallel and sequential execution as appropriate.
+/// Thread safety is not guaranteed; create a new instance per orchestration if used concurrently.</remarks>
+/// <param name="agentCatalog">The catalog of available agent profiles used to match and assign tasks during orchestration planning. Cannot be
+/// null.</param>
 public sealed class RequestDecomposer(IAgentCatalog agentCatalog) : IRequestDecomposer
 {
-    private readonly IReadOnlyList<AgentProfile> agentProfiles = agentCatalog.GetAll();
+    private readonly IReadOnlyList<AgentProfile> _agentProfiles = agentCatalog.GetAll();
 
     public OrchestrationPlan CreatePlan(OrchestrationRequest request)
     {
@@ -18,7 +26,7 @@ public sealed class RequestDecomposer(IAgentCatalog agentCatalog) : IRequestDeco
         for (var index = 0; index < clauses.Count; index++)
         {
             var clause = clauses[index];
-            var profile = this.SelectProfile(clause, request.PreferredAgents);
+            var profile = SelectProfile(clause, request.PreferredAgents);
             var phase = DeterminePhase(profile);
             var taskId = $"task-{index + 1}";
 
@@ -98,7 +106,7 @@ public sealed class RequestDecomposer(IAgentCatalog agentCatalog) : IRequestDeco
 
     private AgentProfile SelectProfile(string clause, IReadOnlyList<string> preferredAgents)
     {
-        var scored = this.agentProfiles
+        var scored = _agentProfiles
             .Select(profile => new
             {
                 Profile = profile,
@@ -120,7 +128,7 @@ public sealed class RequestDecomposer(IAgentCatalog agentCatalog) : IRequestDeco
             return scored[0].Profile;
         }
 
-        return this.agentProfiles.FirstOrDefault(profile => profile.Id.Equals("csharp", StringComparison.OrdinalIgnoreCase))
+        return _agentProfiles.FirstOrDefault(profile => profile.Id.Equals("csharp", StringComparison.OrdinalIgnoreCase))
             ?? scored[0].Profile;
     }
 

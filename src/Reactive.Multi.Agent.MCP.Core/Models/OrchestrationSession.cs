@@ -1,5 +1,12 @@
 namespace Reactive.Multi.Agent.MCP.Core.Models;
 
+/// <summary>
+/// Represents the state and metadata of a single orchestration session, including its lifecycle, execution history, and
+/// recovery information.
+/// </summary>
+/// <remarks>An orchestration session tracks the progress and status of a workflow execution, including its
+/// request details, execution plan, ledger of actions, and any supervisor or maintenance activities. This type is
+/// typically used to monitor, resume, or recover orchestrated workflows in distributed systems.</remarks>
 public sealed class OrchestrationSession
 {
     public string SessionId { get; set; } = string.Empty;

@@ -1,5 +1,12 @@
 namespace Reactive.Multi.Agent.MCP.Core.Models;
 
+/// <summary>
+/// Represents a record of a session's history, including metadata, user request details, and task progress information.
+/// </summary>
+/// <remarks>This class is typically used to track the state and progress of a session over time, such as in
+/// workflow or job processing systems. It provides information about when the session was created and last updated, the
+/// original user request, the current status, and various task-related counts. All properties are mutable to allow
+/// updates as the session progresses.</remarks>
 public sealed class SessionHistoryEntry
 {
     public string SessionId { get; set; } = string.Empty;

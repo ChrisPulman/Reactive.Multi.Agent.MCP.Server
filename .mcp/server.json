@@ -3,13 +3,13 @@
     "name": "io.github.chrispulman/reactive-multi-agent-mcp-server",
     "title": "Reactive Multi Agent MCP Server",
     "description": "Reactive Multi Agent MCP Server is a .NET 10 MCP server that gives GitHub Copilot a durable multi-agent orchestration layer for working real solutions with specialist agents.",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "packages": [
         {
             "registryType": "nuget",
             "registryBaseUrl": "https://api.nuget.org/v3/index.json",
             "identifier": "CP.Reactive.Multi.Agent.MCP.Server",
-            "version": "0.4.0",
+            "version": "0.5.0",
             "runtimeHint": "dnx",
             "transport": {
                 "type": "stdio"

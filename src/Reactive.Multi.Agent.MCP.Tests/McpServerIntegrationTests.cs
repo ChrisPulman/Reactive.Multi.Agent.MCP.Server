@@ -23,7 +23,7 @@ public class McpServerIntegrationTests
         {
             Command = "dotnet",
             Arguments = new List<string> { "run", "--no-build", "--configuration", configuration, "--project", serverCsproj },
-            EnvironmentVariables = new Dictionary<string, string>
+            EnvironmentVariables = new Dictionary<string, string?>
             {
                 ["REACTIVE_MULTI_AGENT_MCP_STATE_ROOT"] = stateDir,
             },
@@ -42,18 +42,18 @@ public class McpServerIntegrationTests
 
     [Test]
     [Timeout(30_000)]
-    public async Task Server_Lists_33_Registered_Tools()
+    public async Task Server_Lists_33_Registered_Tools(CancellationToken cancellationToken)
     {
-        var tools = await _client.ListToolsAsync();
+        var tools = await _client.ListToolsAsync(cancellationToken: cancellationToken);
 
         await Assert.That(tools.Count).IsEqualTo(33);
     }
 
     [Test]
     [Timeout(30_000)]
-    public async Task Server_Tool_Names_Include_All_Expected_Categories()
+    public async Task Server_Tool_Names_Include_All_Expected_Categories(CancellationToken cancellationToken)
     {
-        var tools = await _client.ListToolsAsync();
+        var tools = await _client.ListToolsAsync(cancellationToken: cancellationToken);
         var names = tools.Select(t => t.Name).ToHashSet();
 
         await Assert.That(names).Contains("multiagent_orchestrate_request");
@@ -66,18 +66,18 @@ public class McpServerIntegrationTests
 
     [Test]
     [Timeout(30_000)]
-    public async Task Server_Lists_4_Static_Resources()
+    public async Task Server_Lists_4_Static_Resources(CancellationToken cancellationToken)
     {
-        var resources = await _client.ListResourcesAsync();
+        var resources = await _client.ListResourcesAsync(cancellationToken: cancellationToken);
 
         await Assert.That(resources.Count).IsEqualTo(4);
     }
 
     [Test]
     [Timeout(30_000)]
-    public async Task Server_Lists_1_Resource_Template()
+    public async Task Server_Lists_1_Resource_Template(CancellationToken cancellationToken)
     {
-        var templates = await _client.ListResourceTemplatesAsync();
+        var templates = await _client.ListResourceTemplatesAsync(cancellationToken: cancellationToken);
 
         await Assert.That(templates.Count).IsEqualTo(1);
         await Assert.That(templates[0].UriTemplate).Contains("session");
@@ -85,18 +85,18 @@ public class McpServerIntegrationTests
 
     [Test]
     [Timeout(30_000)]
-    public async Task Server_Lists_3_Registered_Prompts()
+    public async Task Server_Lists_3_Registered_Prompts(CancellationToken cancellationToken)
     {
-        var prompts = await _client.ListPromptsAsync();
+        var prompts = await _client.ListPromptsAsync(cancellationToken: cancellationToken);
 
         await Assert.That(prompts.Count).IsEqualTo(3);
     }
 
     [Test]
     [Timeout(30_000)]
-    public async Task Server_Prompt_Names_Include_All_Expected_Prompts()
+    public async Task Server_Prompt_Names_Include_All_Expected_Prompts(CancellationToken cancellationToken)
     {
-        var prompts = await _client.ListPromptsAsync();
+        var prompts = await _client.ListPromptsAsync(cancellationToken: cancellationToken);
         var names = prompts.Select(p => p.Name).ToHashSet();
 
         await Assert.That(names).Contains("create_multi_agent_plan");
@@ -106,11 +106,12 @@ public class McpServerIntegrationTests
 
     [Test]
     [Timeout(30_000)]
-    public async Task OrchestrateRequest_Tool_Returns_Session_Payload()
+    public async Task OrchestrateRequest_Tool_Returns_Session_Payload(CancellationToken cancellationToken)
     {
         var result = await _client.CallToolAsync(
             "multiagent_orchestrate_request",
-            new Dictionary<string, object?> { ["userRequest"] = "Build a C# console app" });
+            new Dictionary<string, object?> { ["userRequest"] = "Build a C# console app" },
+            cancellationToken: cancellationToken);
 
         await Assert.That(result.IsError ?? false).IsFalse();
         var text = ((TextContentBlock)result.Content[0]).Text;
@@ -124,11 +125,12 @@ public class McpServerIntegrationTests
 
     [Test]
     [Timeout(30_000)]
-    public async Task CsharpAgent_With_Invalid_Session_Returns_Safe_Error_Payload()
+    public async Task CsharpAgent_With_Invalid_Session_Returns_Safe_Error_Payload(CancellationToken cancellationToken)
     {
         var result = await _client.CallToolAsync(
             "multiagent_csharp_agent",
-            new Dictionary<string, object?> { ["sessionId"] = "invalid-session-000", ["taskId"] = "task-1" });
+            new Dictionary<string, object?> { ["sessionId"] = "invalid-session-000", ["taskId"] = "task-1" },
+            cancellationToken: cancellationToken);
 
         await Assert.That(result.IsError ?? false).IsFalse();
         var text = ((TextContentBlock)result.Content[0]).Text;
@@ -141,11 +143,12 @@ public class McpServerIntegrationTests
 
     [Test]
     [Timeout(30_000)]
-    public async Task CatalogList_Tool_Returns_Agents_Count_And_Array()
+    public async Task CatalogList_Tool_Returns_Agents_Count_And_Array(CancellationToken cancellationToken)
     {
         var result = await _client.CallToolAsync(
             "multiagent_agent_catalog_list",
-            new Dictionary<string, object?>());
+            new Dictionary<string, object?>(),
+            cancellationToken: cancellationToken);
 
         await Assert.That(result.IsError ?? false).IsFalse();
         var text = ((TextContentBlock)result.Content[0]).Text;
@@ -158,9 +161,11 @@ public class McpServerIntegrationTests
 
     [Test]
     [Timeout(30_000)]
-    public async Task Catalog_Resource_Read_Returns_Agents_Json()
+    public async Task Catalog_Resource_Read_Returns_Agents_Json(CancellationToken cancellationToken)
     {
-        var result = await _client.ReadResourceAsync("multiagent://catalog");
+        var result = await _client.ReadResourceAsync(
+            "multiagent://catalog",
+            cancellationToken: cancellationToken);
 
         await Assert.That(result.Contents.Count).IsGreaterThan(0);
         var text = ((TextResourceContents)result.Contents[0]).Text;
@@ -172,9 +177,11 @@ public class McpServerIntegrationTests
 
     [Test]
     [Timeout(30_000)]
-    public async Task RecentHistory_Resource_Read_Returns_Json_Array()
+    public async Task RecentHistory_Resource_Read_Returns_Json_Array(CancellationToken cancellationToken)
     {
-        var result = await _client.ReadResourceAsync("multiagent://history/recent");
+        var result = await _client.ReadResourceAsync(
+            "multiagent://history/recent",
+            cancellationToken: cancellationToken);
 
         await Assert.That(result.Contents.Count).IsGreaterThan(0);
         var text = ((TextResourceContents)result.Contents[0]).Text;
@@ -184,9 +191,11 @@ public class McpServerIntegrationTests
 
     [Test]
     [Timeout(30_000)]
-    public async Task Architecture_Resource_Read_Returns_Hub_And_Spoke_Model()
+    public async Task Architecture_Resource_Read_Returns_Hub_And_Spoke_Model(CancellationToken cancellationToken)
     {
-        var result = await _client.ReadResourceAsync("multiagent://architecture/hub-and-spoke");
+        var result = await _client.ReadResourceAsync(
+            "multiagent://architecture/hub-and-spoke",
+            cancellationToken: cancellationToken);
 
         await Assert.That(result.Contents.Count).IsGreaterThan(0);
         var text = ((TextResourceContents)result.Contents[0]).Text;
@@ -198,9 +207,11 @@ public class McpServerIntegrationTests
 
     [Test]
     [Timeout(30_000)]
-    public async Task ArtifactSchema_Resource_Read_Returns_Example_Schema()
+    public async Task ArtifactSchema_Resource_Read_Returns_Example_Schema(CancellationToken cancellationToken)
     {
-        var result = await _client.ReadResourceAsync("multiagent://schemas/artifacts");
+        var result = await _client.ReadResourceAsync(
+            "multiagent://schemas/artifacts",
+            cancellationToken: cancellationToken);
 
         await Assert.That(result.Contents.Count).IsGreaterThan(0);
         var text = ((TextResourceContents)result.Contents[0]).Text;
@@ -212,11 +223,12 @@ public class McpServerIntegrationTests
 
     [Test]
     [Timeout(30_000)]
-    public async Task CreateMultiAgentPlan_Prompt_Returns_Phase_Guide()
+    public async Task CreateMultiAgentPlan_Prompt_Returns_Phase_Guide(CancellationToken cancellationToken)
     {
         var result = await _client.GetPromptAsync(
             "create_multi_agent_plan",
-            new Dictionary<string, object?> { ["userRequest"] = "Build a Blazor app with CI" });
+            new Dictionary<string, object?> { ["userRequest"] = "Build a Blazor app with CI" },
+            cancellationToken: cancellationToken);
 
         await Assert.That(result.Messages.Count).IsGreaterThan(0);
         var messageText = ((TextContentBlock)result.Messages[0].Content).Text;
@@ -230,11 +242,12 @@ public class McpServerIntegrationTests
 
     [Test]
     [Timeout(30_000)]
-    public async Task OrchestrateRequest_With_Blank_UserRequest_Returns_Safe_Error_Naming_Parameter()
+    public async Task OrchestrateRequest_With_Blank_UserRequest_Returns_Safe_Error_Naming_Parameter(CancellationToken cancellationToken)
     {
         var result = await _client.CallToolAsync(
             "multiagent_orchestrate_request",
-            new Dictionary<string, object?> { ["userRequest"] = "" });
+            new Dictionary<string, object?> { ["userRequest"] = "" },
+            cancellationToken: cancellationToken);
 
         await Assert.That(result.IsError ?? false).IsFalse();
         var text = ((TextContentBlock)result.Content[0]).Text;
@@ -248,11 +261,12 @@ public class McpServerIntegrationTests
 
     [Test]
     [Timeout(30_000)]
-    public async Task SessionStatus_With_Blank_SessionId_Returns_Safe_Error_Naming_Parameter()
+    public async Task SessionStatus_With_Blank_SessionId_Returns_Safe_Error_Naming_Parameter(CancellationToken cancellationToken)
     {
         var result = await _client.CallToolAsync(
             "multiagent_session_status",
-            new Dictionary<string, object?> { ["sessionId"] = "" });
+            new Dictionary<string, object?> { ["sessionId"] = "" },
+            cancellationToken: cancellationToken);
 
         await Assert.That(result.IsError ?? false).IsFalse();
         var text = ((TextContentBlock)result.Content[0]).Text;
@@ -266,11 +280,12 @@ public class McpServerIntegrationTests
 
     [Test]
     [Timeout(30_000)]
-    public async Task CSharpAgent_With_Blank_SessionId_Returns_Safe_Error_Naming_Parameter()
+    public async Task CSharpAgent_With_Blank_SessionId_Returns_Safe_Error_Naming_Parameter(CancellationToken cancellationToken)
     {
         var result = await _client.CallToolAsync(
             "multiagent_csharp_agent",
-            new Dictionary<string, object?> { ["sessionId"] = "", ["taskId"] = "task-1" });
+            new Dictionary<string, object?> { ["sessionId"] = "", ["taskId"] = "task-1" },
+            cancellationToken: cancellationToken);
 
         await Assert.That(result.IsError ?? false).IsFalse();
         var text = ((TextContentBlock)result.Content[0]).Text;
@@ -284,11 +299,12 @@ public class McpServerIntegrationTests
 
     [Test]
     [Timeout(30_000)]
-    public async Task CSharpAgent_With_Blank_TaskId_Returns_Safe_Error_Naming_Parameter()
+    public async Task CSharpAgent_With_Blank_TaskId_Returns_Safe_Error_Naming_Parameter(CancellationToken cancellationToken)
     {
         var result = await _client.CallToolAsync(
             "multiagent_csharp_agent",
-            new Dictionary<string, object?> { ["sessionId"] = "some-session", ["taskId"] = "" });
+            new Dictionary<string, object?> { ["sessionId"] = "some-session", ["taskId"] = "" },
+            cancellationToken: cancellationToken);
 
         await Assert.That(result.IsError ?? false).IsFalse();
         var text = ((TextContentBlock)result.Content[0]).Text;
@@ -302,11 +318,12 @@ public class McpServerIntegrationTests
 
     [Test]
     [Timeout(30_000)]
-    public async Task GetAgent_With_Blank_Id_Returns_Safe_Error_Naming_Parameter()
+    public async Task GetAgent_With_Blank_Id_Returns_Safe_Error_Naming_Parameter(CancellationToken cancellationToken)
     {
         var result = await _client.CallToolAsync(
             "multiagent_agent_catalog_get",
-            new Dictionary<string, object?> { ["id"] = "" });
+            new Dictionary<string, object?> { ["id"] = "" },
+            cancellationToken: cancellationToken);
 
         await Assert.That(result.IsError ?? false).IsFalse();
         var text = ((TextContentBlock)result.Content[0]).Text;

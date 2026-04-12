@@ -2,7 +2,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Protocol;
-using ModelContextProtocol.Server;
 using Reactive.Multi.Agent.MCP.Core.Abstractions;
 using Reactive.Multi.Agent.MCP.Core.Configuration;
 using Reactive.Multi.Agent.MCP.Core.Persistence;
@@ -15,6 +14,12 @@ using System.Diagnostics;
 
 namespace Reactive.Multi.Agent.MCP.Server;
 
+/// <summary>
+/// Provides the entry point and configuration methods for the Reactive Multi Agent MCP Server application.
+/// </summary>
+/// <remarks>This class is responsible for application startup, dependency injection configuration, and host
+/// initialization. It sets up logging, service registrations, and server metadata, and handles unhandled exceptions at
+/// the application level. The class is not intended to be instantiated.</remarks>
 public static class Program
 {
     public static IHost CreateHost(string[] args)

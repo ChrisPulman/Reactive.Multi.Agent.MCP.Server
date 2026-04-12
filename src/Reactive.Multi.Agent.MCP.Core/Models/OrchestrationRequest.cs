@@ -1,5 +1,13 @@
 namespace Reactive.Multi.Agent.MCP.Core.Models;
 
+/// <summary>
+/// Represents a request to orchestrate an operation, including the user's intent, constraints, desired artifacts, and
+/// agent preferences.
+/// </summary>
+/// <remarks>This class is used to encapsulate all information required to initiate an orchestration process. It
+/// provides properties for specifying the user's request, any constraints to apply, the artifacts to produce, and
+/// preferences for agent selection. The class is immutable after construction, except for property setters, and is
+/// intended for use as a data transfer object in orchestration scenarios.</remarks>
 public sealed class OrchestrationRequest
 {
     public string UserRequest { get; set; } = string.Empty;

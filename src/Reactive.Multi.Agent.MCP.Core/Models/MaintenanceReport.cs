@@ -1,5 +1,13 @@
 namespace Reactive.Multi.Agent.MCP.Core.Models;
 
+/// <summary>
+/// Represents a comprehensive report detailing the results of a maintenance session, including findings, actions taken,
+/// recommendations, and trend analysis.
+/// </summary>
+/// <remarks>A maintenance report aggregates information about a maintenance session, such as automatically
+/// applied policies, detected issues, recommended actions, and historical trends. This type is typically used to
+/// provide a summary for review, auditing, or further action by supervisors or automated systems. All properties are
+/// populated at the time the report is generated and are intended to be read-only after creation.</remarks>
 public sealed class MaintenanceReport
 {
     public string SessionId { get; set; } = string.Empty;

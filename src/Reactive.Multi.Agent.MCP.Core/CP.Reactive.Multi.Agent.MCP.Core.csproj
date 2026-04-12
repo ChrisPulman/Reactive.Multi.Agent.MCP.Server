@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>CP.Reactive.Multi.Agent.MCP.Core</AssemblyName>
     <RootNamespace>Reactive.Multi.Agent.MCP.Core</RootNamespace>
@@ -8,5 +8,14 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.Sqlite" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Reactive.Multi.Agent.MCP.Core.Models"/>
+    <using Include="Microsoft.Data.Sqlite"/>
+    <using Include="Reactive.Multi.Agent.MCP.Core.Abstractions"/>
+    <using Include="Reactive.Multi.Agent.MCP.Core.Configuration"/>
+    <using Include="System.Text.Json"/>
+    <using Include="System.Text.Json.Serialization"/>
   </ItemGroup>
 </Project>

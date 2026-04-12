@@ -5,6 +5,12 @@ using System.ComponentModel;
 
 namespace Reactive.Multi.Agent.MCP.Server.Tools;
 
+/// <summary>
+/// Provides static methods for listing, searching, and retrieving specialist agent information from an agent catalog.
+/// </summary>
+/// <remarks>This class is intended for use with agent catalog management scenarios, such as discovering available
+/// agents or obtaining detailed agent manifests. All methods are static and require an implementation of IAgentCatalog.
+/// Thread safety depends on the underlying IAgentCatalog implementation.</remarks>
 [McpServerToolType]
 public sealed class AgentCatalogTools
 {

@@ -6,6 +6,14 @@ using System.ComponentModel;
 
 namespace Reactive.Multi.Agent.MCP.Server.Tools;
 
+/// <summary>
+/// Provides static methods to activate or update various specialized agent task contexts within a multi-agent
+/// orchestration environment.
+/// </summary>
+/// <remarks>Each method in this class corresponds to a specific agent type, such as Architect, CSharp, Reactive,
+/// or CI, and facilitates the management of agent tasks by interacting with an orchestration service. These methods are
+/// intended for use in scenarios where automated task delegation, progress tracking, or result recording is required
+/// for different agent roles. The class is static and cannot be instantiated.</remarks>
 [McpServerToolType]
 public sealed class WorkerAgentTools
 {

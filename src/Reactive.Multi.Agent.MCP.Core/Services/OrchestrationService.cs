@@ -1,15 +1,25 @@
-using Reactive.Multi.Agent.MCP.Core.Abstractions;
-using Reactive.Multi.Agent.MCP.Core.Models;
 using System.Text;
 
 namespace Reactive.Multi.Agent.MCP.Core.Services;
 
+/// <summary>
+/// Provides orchestration and supervision services for multi-agent workflows, including session management, task
+/// coordination, maintenance, and recovery operations.
+/// </summary>
+/// <remarks>This service coordinates the lifecycle of orchestration sessions, including task assignment, progress
+/// tracking, supervisor action planning, maintenance sweeps, and recovery from failures. It is designed for use in
+/// environments where multiple agents collaborate on complex tasks and require robust supervision, checkpointing, and
+/// automated policy enforcement. Thread safety and persistence are determined by the provided session store
+/// implementation.</remarks>
+/// <param name="requestDecomposer">The request decomposer used to break down orchestration requests into executable agent plans. Cannot be null.</param>
+/// <param name="agentCatalog">The agent catalog that supplies available agent profiles and capabilities. Cannot be null.</param>
+/// <param name="sessionStore">The session store used to persist orchestration sessions and their state. Cannot be null.</param>
 public sealed class OrchestrationService(
     IRequestDecomposer requestDecomposer,
     IAgentCatalog agentCatalog,
     IOrchestrationSessionStore sessionStore) : IOrchestrationService
 {
-    private readonly IReadOnlyDictionary<string, AgentProfile> profiles = agentCatalog.GetAll().ToDictionary(profile => profile.Id, StringComparer.OrdinalIgnoreCase);
+    private readonly IReadOnlyDictionary<string, AgentProfile> _profiles = agentCatalog.GetAll().ToDictionary(profile => profile.Id, StringComparer.OrdinalIgnoreCase);
 
     public OrchestrationSession CreateSession(OrchestrationRequest request)
     {
@@ -838,7 +848,7 @@ public sealed class OrchestrationService(
             && candidate.AgentId.Equals(agentId, StringComparison.OrdinalIgnoreCase))
             ?? throw new InvalidOperationException($"Task '{taskId}' for agent '{agentId}' was not found in session '{sessionId}'.");
 
-        if (!this.profiles.TryGetValue(agentId, out var profile))
+        if (!this._profiles.TryGetValue(agentId, out var profile))
         {
             throw new InvalidOperationException($"Unknown agent profile '{agentId}'.");
         }

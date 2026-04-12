@@ -120,6 +120,29 @@ public class CopilotCrashHardeningTests
         await Assert.That(json.Length).IsLessThan(20000);
     }
 
+    [Test]
+    public async Task SqliteStore_Constructor_Does_Not_Create_Database_File_Until_First_Use()
+    {
+        // This guards against the DI-singleton crash pattern: if the constructor
+        // opens a SQLite connection (e.g. for schema init) and that fails, the
+        // singleton is never cached and every MCP tool call re-throws the same
+        // exception outside McpSafeExecutor, killing the transport.
+        var options = CreateOptions("store-deferred-schema");
+        var dbPath = options.SessionDatabasePath;
+
+        await Assert.That(File.Exists(dbPath)).IsFalse();
+
+        using var store = new SqliteOrchestrationSessionStore(options);
+
+        // Constructor must not create the DB file – no SQLite I/O yet.
+        await Assert.That(File.Exists(dbPath)).IsFalse();
+
+        // First real DB call triggers EnsureSchema() and creates the file.
+        var result = store.Load("probe-id");
+        await Assert.That(result).IsNull();
+        await Assert.That(File.Exists(dbPath)).IsTrue();
+    }
+
     private static ReactiveMultiAgentOptions CreateOptions(string folderPrefix)
         => new()
         {
