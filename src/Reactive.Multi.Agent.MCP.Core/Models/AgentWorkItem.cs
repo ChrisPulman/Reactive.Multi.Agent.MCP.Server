@@ -1,5 +1,13 @@
 namespace Reactive.Multi.Agent.MCP.Core.Models;
 
+/// <summary>
+/// Represents a unit of work assigned to an agent, including task details, status, dependencies, and resource budgets.
+/// </summary>
+/// <remarks>An AgentWorkItem encapsulates all information required for an agent to execute a specific task,
+/// including context, objectives, dependencies, and progress tracking. This type is typically used in agent
+/// orchestration scenarios to coordinate and monitor the execution of complex workflows. All properties are mutable to
+/// support dynamic updates as the task progresses. Thread safety is not guaranteed; synchronize access if used
+/// concurrently.</remarks>
 public sealed class AgentWorkItem
 {
     public string TaskId { get; set; } = string.Empty;

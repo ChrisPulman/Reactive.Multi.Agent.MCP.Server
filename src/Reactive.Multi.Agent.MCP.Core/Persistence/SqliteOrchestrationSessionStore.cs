@@ -1,13 +1,13 @@
-using Microsoft.Data.Sqlite;
-using Reactive.Multi.Agent.MCP.Core.Abstractions;
-using Reactive.Multi.Agent.MCP.Core.Configuration;
-using Reactive.Multi.Agent.MCP.Core.Models;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Threading;
-
 namespace Reactive.Multi.Agent.MCP.Core.Persistence;
 
+/// <summary>
+/// Provides a persistent store for orchestration sessions using a local SQLite database. Supports loading, saving, and
+/// searching orchestration session data and history.
+/// </summary>
+/// <remarks>This implementation is thread-safe and intended for use in environments where orchestration session
+/// state must be reliably persisted and queried. The database schema is initialized on first use to avoid exceptions
+/// during dependency injection construction. Dispose the instance to release internal resources when no longer
+/// needed.</remarks>
 public sealed class SqliteOrchestrationSessionStore : IOrchestrationSessionStore, IDisposable
 {
     private static readonly JsonSerializerOptions SerializerOptions = new()
@@ -17,24 +17,30 @@ public sealed class SqliteOrchestrationSessionStore : IOrchestrationSessionStore
         Converters = { new JsonStringEnumConverter() },
     };
 
-    private readonly string connectionString;
-    private readonly SemaphoreSlim gate = new(1, 1);
+    private readonly string _connectionString;
+    private readonly SemaphoreSlim _gate = new(1, 1);
+    private bool _schemaInitialized;
 
     public SqliteOrchestrationSessionStore(ReactiveMultiAgentOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
         Directory.CreateDirectory(options.StateRootPath);
-        this.connectionString = $"Data Source={options.SessionDatabasePath}";
-        this.InitializeSchema();
+        _connectionString = $"Data Source={options.SessionDatabasePath}";
+        // InitializeSchema is deferred to the first database operation so that
+        // a SQLite failure (e.g. missing native library in a dotnet-tool context)
+        // cannot throw inside the DI constructor.  Throwing there would prevent
+        // the singleton from ever being cached, causing every MCP tool call to
+        // fail with an exception that escapes McpSafeExecutor.
     }
 
     public OrchestrationSession? Load(string sessionId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
-        this.gate.Wait();
+        _gate.Wait();
         try
         {
-            using var connection = new SqliteConnection(this.connectionString);
+            EnsureSchema();
+            using var connection = new SqliteConnection(_connectionString);
             connection.Open();
             using var command = connection.CreateCommand();
             command.CommandText = "SELECT payload_json FROM orchestration_sessions WHERE session_id = $sessionId;";
@@ -46,7 +52,7 @@ public sealed class SqliteOrchestrationSessionStore : IOrchestrationSessionStore
         }
         finally
         {
-            this.gate.Release();
+            _gate.Release();
         }
     }
 
@@ -54,10 +60,11 @@ public sealed class SqliteOrchestrationSessionStore : IOrchestrationSessionStore
     {
         ArgumentNullException.ThrowIfNull(session);
         var summary = BuildHistoryEntry(session);
-        this.gate.Wait();
+        _gate.Wait();
         try
         {
-            using var connection = new SqliteConnection(this.connectionString);
+            EnsureSchema();
+            using var connection = new SqliteConnection(_connectionString);
             connection.Open();
 
             using var tx = connection.BeginTransaction();
@@ -113,16 +120,17 @@ public sealed class SqliteOrchestrationSessionStore : IOrchestrationSessionStore
         }
         finally
         {
-            this.gate.Release();
+            _gate.Release();
         }
     }
 
     public IReadOnlyList<SessionHistoryEntry> Search(string? query = null, int limit = 20)
     {
-        this.gate.Wait();
+        _gate.Wait();
         try
         {
-            using var connection = new SqliteConnection(this.connectionString);
+            EnsureSchema();
+            using var connection = new SqliteConnection(_connectionString);
             connection.Open();
             using var command = connection.CreateCommand();
             var effectiveLimit = Math.Max(1, limit);
@@ -172,18 +180,29 @@ public sealed class SqliteOrchestrationSessionStore : IOrchestrationSessionStore
         }
         finally
         {
-            this.gate.Release();
+            _gate.Release();
         }
     }
 
-    public void Dispose()
+    public void Dispose() => _gate.Dispose();
+
+    // Called inside the gate block — no additional synchronisation needed.
+    // If InitializeSchema() throws the flag stays false so the next caller
+    // retries, making transient failures recoverable.
+    private void EnsureSchema()
     {
-        this.gate.Dispose();
+        if (_schemaInitialized)
+        {
+            return;
+        }
+
+        InitializeSchema();
+        _schemaInitialized = true;
     }
 
     private void InitializeSchema()
     {
-        using var connection = new SqliteConnection(this.connectionString);
+        using var connection = new SqliteConnection(_connectionString);
         connection.Open();
         using var command = connection.CreateCommand();
         command.CommandText = """

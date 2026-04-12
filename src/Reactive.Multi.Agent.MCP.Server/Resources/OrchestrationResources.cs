@@ -2,11 +2,18 @@ using ModelContextProtocol.Server;
 using Reactive.Multi.Agent.MCP.Core.Abstractions;
 using Reactive.Multi.Agent.MCP.Core.Models;
 using Reactive.Multi.Agent.MCP.Server.Infrastructure;
-using Reactive.Multi.Agent.MCP.Server.Serialization;
 using System.ComponentModel;
 
 namespace Reactive.Multi.Agent.MCP.Server.Resources;
 
+/// <summary>
+/// Provides static resources for accessing multi-agent orchestration data, including catalogs, session snapshots,
+/// recent history, architecture descriptions, and artifact schemas.
+/// </summary>
+/// <remarks>This class exposes read-only endpoints for retrieving orchestration-related information in a
+/// multi-agent system. All members are static and intended for use in server resource registration scenarios. The
+/// resources are designed for integration with orchestration management tools, monitoring dashboards, or workflow
+/// automation systems. Thread safety is ensured as all members are stateless and do not modify shared data.</remarks>
 [McpServerResourceType]
 public sealed class OrchestrationResources
 {

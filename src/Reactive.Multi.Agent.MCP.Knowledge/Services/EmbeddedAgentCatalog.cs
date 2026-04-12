@@ -5,6 +5,12 @@ using System.Text.Json;
 
 namespace Reactive.Multi.Agent.MCP.Knowledge.Services;
 
+/// <summary>
+/// Provides access to a catalog of agent profiles that are embedded as resources within the assembly.
+/// </summary>
+/// <remarks>The catalog loads agent profiles from embedded JSON resources at runtime. All profile data is
+/// read-only and remains consistent for the lifetime of the application. This implementation is thread-safe and
+/// suitable for scenarios where agent definitions are bundled with the application.</remarks>
 public sealed class EmbeddedAgentCatalog : IAgentCatalog
 {
     private static readonly Lazy<IReadOnlyList<AgentProfile>> Profiles = new(LoadProfiles);
@@ -18,7 +24,7 @@ public sealed class EmbeddedAgentCatalog : IAgentCatalog
     {
         if (string.IsNullOrWhiteSpace(query))
         {
-            return this.GetAll();
+            return GetAll();
         }
 
         var lowered = query.ToLowerInvariant();

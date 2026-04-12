@@ -5,6 +5,17 @@ using Reactive.Multi.Agent.MCP.Server.Infrastructure;
 
 namespace Reactive.Multi.Agent.MCP.Server.Tools;
 
+/// <summary>
+/// Provides a set of static tools for orchestrating, monitoring, and managing multi-agent orchestration sessions using
+/// an implementation of the IOrchestrationService interface.
+/// </summary>
+/// <remarks>This class exposes high-level orchestration operations such as session creation, status retrieval,
+/// task resumption, supervisor action management, maintenance, and policy application. All methods are static and are
+/// designed to be used as server tools for multi-agent orchestration scenarios. Each method expects a valid
+/// IOrchestrationService instance and typically returns a JSON-encoded string representing the result of the operation.
+/// Methods validate input parameters and may throw exceptions for invalid arguments or unknown session/task
+/// identifiers. Thread safety and state management are delegated to the underlying IOrchestrationService
+/// implementation.</remarks>
 [McpServerToolType]
 public sealed class OrchestratorTools
 {

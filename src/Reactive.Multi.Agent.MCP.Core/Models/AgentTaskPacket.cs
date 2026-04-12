@@ -1,5 +1,14 @@
 namespace Reactive.Multi.Agent.MCP.Core.Models;
 
+/// <summary>
+/// Represents a packet containing all relevant information for an agent task, including identifiers, status,
+/// dependencies, objectives, and execution context.
+/// </summary>
+/// <remarks>This class is used to encapsulate the full state and metadata required to manage, track, and execute
+/// a task assigned to an agent. It includes properties for task coordination, dependency management, execution prompts,
+/// checkpoints, and recovery state. The packet is typically exchanged between components responsible for orchestrating
+/// agent workflows and task execution. Thread safety is not guaranteed; synchronize access if instances are shared
+/// across threads.</remarks>
 public sealed class AgentTaskPacket
 {
     public string SessionId { get; set; } = string.Empty;

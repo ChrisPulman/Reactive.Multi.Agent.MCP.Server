@@ -7,6 +7,13 @@ using System.Text;
 
 namespace Reactive.Multi.Agent.MCP.Server.Prompts;
 
+/// <summary>
+/// Provides static methods for generating orchestration and agent prompts used by the MCP server to coordinate
+/// multi-agent workflows and synthesize results.
+/// </summary>
+/// <remarks>This class is intended for use in scenarios where automated orchestration of tasks among multiple
+/// agents is required. The provided methods help construct prompts for planning, agent task execution, and merging
+/// results within an orchestration session. All members are static and thread-safe.</remarks>
 [McpServerPromptType]
 public sealed class OrchestrationPrompts
 {
