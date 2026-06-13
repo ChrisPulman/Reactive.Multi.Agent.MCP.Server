@@ -71,7 +71,7 @@ public sealed class WorkerAgentTools
 
     [McpServerTool(Name = "multiagent_test_agent"), Description("Activate or update the Test Agent task context for verification, testing, and regression work.")]
     public static string TestAgent(IOrchestrationService orchestrationService, string sessionId, string taskId, string? additionalContext = null, string? workLog = null, string? workSummary = null, AgentArtifact[]? artifacts = null, HandoffItem[]? handoffItems = null, string[]? risks = null, bool markComplete = false, bool createCheckpoint = false, string? checkpointSummary = null, string[]? memoryReloadItems = null, AgentFailureKind failureKind = AgentFailureKind.None, string? failureReason = null, int? currentEstimatedTokens = null, int? remainingSubscriptionTokens = null)
-        => DispatchAgent(orchestrationService, sessionId, taskId, "tester", additionalContext, workLog, workSummary, artifacts, handoffItems, risks, markComplete, createCheckpoint, checkpointSummary, memoryReloadItems, failureKind, failureReason, currentEstimatedTokens, remainingSubscriptionTokens);
+        => DispatchAgent(orchestrationService, sessionId, taskId, "tester", additionalContext, workLog, workSummary, artifacts, handoffItems, risks, markComplete, createCheckpoint, checkpointSummary, memoryReloadItems, failureKind, failureReason, currentEstimatedTokens, remainingSubscriptionTokens, operationName: "multiagent_test_agent");
 
     [McpServerTool(Name = "multiagent_reviewer_agent"), Description("Activate or update the Reviewer Agent task context for critique, security, and readiness checks.")]
     public static string ReviewerAgent(IOrchestrationService orchestrationService, string sessionId, string taskId, string? additionalContext = null, string? workLog = null, string? workSummary = null, AgentArtifact[]? artifacts = null, HandoffItem[]? handoffItems = null, string[]? risks = null, bool markComplete = false, bool createCheckpoint = false, string? checkpointSummary = null, string[]? memoryReloadItems = null, AgentFailureKind failureKind = AgentFailureKind.None, string? failureReason = null, int? currentEstimatedTokens = null, int? remainingSubscriptionTokens = null)
@@ -95,8 +95,9 @@ public sealed class WorkerAgentTools
         AgentFailureKind failureKind,
         string? failureReason,
         int? currentEstimatedTokens,
-        int? remainingSubscriptionTokens)
-        => McpSafeExecutor.ExecuteJson($"multiagent_{agentId}_agent", () =>
+        int? remainingSubscriptionTokens,
+        string? operationName = null)
+        => McpSafeExecutor.ExecuteJson(operationName ?? $"multiagent_{agentId}_agent", () =>
         {
             ArgumentNullException.ThrowIfNull(orchestrationService);
             ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);

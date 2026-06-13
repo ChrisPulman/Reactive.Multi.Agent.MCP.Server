@@ -92,42 +92,73 @@ public static class Program
         };
     }
 
-    public static async Task Main(string[] args)
+    public static Task Main(string[] args)
+        => RunAsync(async () =>
+        {
+            using var host = CreateHost(args);
+            await host.RunAsync();
+        });
+
+    internal static Task RunAsync(Func<Task> runHostAsync)
+        => RunAsync(runHostAsync, Console.Error);
+
+    internal static async Task RunAsync(Func<Task> runHostAsync, TextWriter errorWriter)
     {
-        AppDomain.CurrentDomain.UnhandledException += static (_, eventArgs) =>
-        {
-            try
-            {
-                Console.Error.WriteLine($"fatal.unhandled_exception={eventArgs.ExceptionObject}");
-            }
-            catch
-            {
-                // Avoid crash-looping while trying to report a crash.
-            }
-        };
-
-        TaskScheduler.UnobservedTaskException += static (_, eventArgs) =>
-        {
-            try
-            {
-                Console.Error.WriteLine($"fatal.unobserved_task_exception={eventArgs.Exception}");
-            }
-            catch
-            {
-                // Avoid crash-looping while trying to report a crash.
-            }
-
-            eventArgs.SetObserved();
-        };
+        AppDomain.CurrentDomain.UnhandledException += (_, eventArgs) => WriteUnhandledExceptionDiagnostic(eventArgs, errorWriter);
+        TaskScheduler.UnobservedTaskException += (_, eventArgs) => WriteUnobservedTaskExceptionDiagnostic(eventArgs, errorWriter);
 
         try
         {
-            await CreateHost(args).RunAsync();
+            await runHostAsync();
         }
         catch (Exception ex) when (!Debugger.IsAttached)
         {
-            Console.Error.WriteLine($"fatal.host_termination={ex}");
+            WriteHostTerminationDiagnostic(ex, errorWriter);
             Environment.ExitCode = 1;
+        }
+    }
+
+    internal static void WriteUnhandledExceptionDiagnostic(UnhandledExceptionEventArgs eventArgs)
+        => WriteUnhandledExceptionDiagnostic(eventArgs, Console.Error);
+
+    internal static void WriteUnhandledExceptionDiagnostic(UnhandledExceptionEventArgs eventArgs, TextWriter errorWriter)
+    {
+        try
+        {
+            errorWriter.WriteLine($"fatal.unhandled_exception={eventArgs.ExceptionObject}");
+        }
+        catch
+        {
+            // Avoid crash-looping while trying to report a crash.
+        }
+    }
+
+    internal static void WriteUnobservedTaskExceptionDiagnostic(UnobservedTaskExceptionEventArgs eventArgs)
+        => WriteUnobservedTaskExceptionDiagnostic(eventArgs, Console.Error);
+
+    internal static void WriteUnobservedTaskExceptionDiagnostic(UnobservedTaskExceptionEventArgs eventArgs, TextWriter errorWriter)
+    {
+        try
+        {
+            errorWriter.WriteLine($"fatal.unobserved_task_exception={eventArgs.Exception}");
+        }
+        catch
+        {
+            // Avoid crash-looping while trying to report a crash.
+        }
+
+        eventArgs.SetObserved();
+    }
+
+    internal static void WriteHostTerminationDiagnostic(Exception exception, TextWriter errorWriter)
+    {
+        try
+        {
+            errorWriter.WriteLine($"fatal.host_termination={exception}");
+        }
+        catch
+        {
+            // Avoid crash-looping while trying to report a crash.
         }
     }
 }

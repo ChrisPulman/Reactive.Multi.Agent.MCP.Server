@@ -14,4 +14,26 @@ public class CatalogLoadingTests
         await Assert.That(catalog.GetById("reactiveui")).IsNotNull();
         await Assert.That(catalog.Search("avalonia").Any(profile => profile.Id == "avalonia")).IsTrue();
     }
+
+    [Test]
+    public async Task EmbeddedCatalog_Search_Returns_Category_Then_DisplayName_Sorted_Projection()
+    {
+        IAgentCatalog catalog = new EmbeddedAgentCatalog();
+
+        var results = catalog.Search("agent");
+
+        await Assert.That(results.Count).IsGreaterThan(1);
+        for (var index = 1; index < results.Count; index++)
+        {
+            var previous = results[index - 1];
+            var current = results[index];
+            var categoryComparison = string.Compare(previous.Category, current.Category, StringComparison.OrdinalIgnoreCase);
+
+            await Assert.That(categoryComparison <= 0).IsTrue();
+            if (categoryComparison == 0)
+            {
+                await Assert.That(string.Compare(previous.DisplayName, current.DisplayName, StringComparison.OrdinalIgnoreCase) <= 0).IsTrue();
+            }
+        }
+    }
 }

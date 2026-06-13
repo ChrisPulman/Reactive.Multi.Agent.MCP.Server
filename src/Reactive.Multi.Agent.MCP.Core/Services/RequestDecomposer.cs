@@ -34,6 +34,7 @@ public sealed class RequestDecomposer(IAgentCatalog agentCatalog) : IRequestDeco
             {
                 TaskId = taskId,
                 AgentId = profile.Id,
+                AgentName = BuildAgentName(profile, taskId),
                 AgentToolName = profile.ToolName,
                 AgentSessionId = $"{profile.Id}-{taskId}",
                 Title = BuildTitle(profile, clause),
@@ -134,12 +135,11 @@ public sealed class RequestDecomposer(IAgentCatalog agentCatalog) : IRequestDeco
 
     private static int ScoreProfile(AgentProfile profile, string clause, IReadOnlyList<string> preferredAgents)
     {
-        var lowered = clause.ToLowerInvariant();
         var score = 0;
 
         foreach (var keyword in profile.RoutingKeywords)
         {
-            if (!lowered.Contains(keyword.ToLowerInvariant(), StringComparison.Ordinal))
+            if (!clause.Contains(keyword, StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }
@@ -192,6 +192,9 @@ public sealed class RequestDecomposer(IAgentCatalog agentCatalog) : IRequestDeco
             }
         }
     }
+
+    private static string BuildAgentName(AgentProfile profile, string taskId)
+        => $"{profile.DisplayName} - {taskId}";
 
     private static string BuildTitle(AgentProfile profile, string clause)
         => $"{profile.DisplayName}: {char.ToUpperInvariant(clause[0])}{clause[1..]}";

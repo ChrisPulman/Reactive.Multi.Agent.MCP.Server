@@ -23,7 +23,8 @@ public sealed class OrchestrationResources
         => McpSafeExecutor.ExecuteJson("resource:multiagent://catalog", () =>
         {
             ArgumentNullException.ThrowIfNull(agentCatalog);
-            return new { count = agentCatalog.GetAll().Count, agents = agentCatalog.GetAll() };
+            var agents = agentCatalog.GetAll();
+            return new { count = agents.Count, agents };
         });
 
     [McpServerResource(UriTemplate = "multiagent://session/{sessionId}", Name = "Multi-Agent Session", MimeType = "application/json")]

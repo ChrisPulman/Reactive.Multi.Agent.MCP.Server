@@ -30,6 +30,12 @@ public class WorkerAgentAndCatalogToolsTests
         await Assert.That(taskId.GetString()).IsEqualTo(task.TaskId);
         await Assert.That(root.TryGetProperty("status", out var status)).IsTrue();
         await Assert.That(status.GetString()).IsEqualTo("InProgress");
+        await Assert.That(root.TryGetProperty("agentName", out var agentName)).IsTrue();
+        await Assert.That(agentName.GetString()).IsEqualTo("Blazor Agent - task-1");
+        await Assert.That(root.TryGetProperty("shutdownRequired", out var shutdownRequired)).IsTrue();
+        await Assert.That(shutdownRequired.GetBoolean()).IsFalse();
+        await Assert.That(root.TryGetProperty("lifecycleInstruction", out var lifecycleInstruction)).IsTrue();
+        await Assert.That(lifecycleInstruction.GetString()).Contains("Spawn or continue sub-agent");
         await Assert.That(root.TryGetProperty("executionPrompt", out var prompt)).IsTrue();
         await Assert.That(string.IsNullOrWhiteSpace(prompt.GetString())).IsFalse();
     }
@@ -55,6 +61,10 @@ public class WorkerAgentAndCatalogToolsTests
         await Assert.That(root.TryGetProperty("ok", out _)).IsFalse();
         await Assert.That(root.TryGetProperty("status", out var status)).IsTrue();
         await Assert.That(status.GetString()).IsEqualTo("Completed");
+        await Assert.That(root.TryGetProperty("shutdownRequired", out var shutdownRequired)).IsTrue();
+        await Assert.That(shutdownRequired.GetBoolean()).IsTrue();
+        await Assert.That(root.TryGetProperty("lifecycleInstruction", out var lifecycleInstruction)).IsTrue();
+        await Assert.That(lifecycleInstruction.GetString()).Contains("Close sub-agent");
     }
 
     [Test]
@@ -94,13 +104,89 @@ public class WorkerAgentAndCatalogToolsTests
         WorkerAgentTools.BlazorAgent(orchestration, session.SessionId, task.TaskId);
         var json = WorkerAgentTools.BlazorAgent(
             orchestration, session.SessionId, task.TaskId,
-            failureKind: AgentFailureKind.ContextWindowLimit, failureReason: "Context too large.");
+            failureKind: AgentFailureKind.ContextWindowLimit);
 
         using var document = JsonDocument.Parse(json);
         var root = document.RootElement;
         await Assert.That(root.TryGetProperty("ok", out _)).IsFalse();
         await Assert.That(root.TryGetProperty("needsResume", out var needsResume)).IsTrue();
         await Assert.That(needsResume.GetBoolean()).IsTrue();
+
+        var reloaded = orchestration.GetSession(session.SessionId)!;
+        await Assert.That(reloaded.Plan.Tasks.Single().RecoveryState.LastFailureReason).IsEqualTo(nameof(AgentFailureKind.ContextWindowLimit));
+    }
+
+    [Test]
+    public async Task BlazorAgent_Uses_Explicit_Failure_Reason_When_Provided()
+    {
+        var options = CreateOptions("worker-explicit-failure-reason");
+        using var store = new SqliteOrchestrationSessionStore(options);
+        IAgentCatalog catalog = new EmbeddedAgentCatalog();
+        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
+        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
+        var task = session.Plan.Tasks.Single();
+
+        _ = WorkerAgentTools.BlazorAgent(
+            orchestration,
+            session.SessionId,
+            task.TaskId,
+            failureKind: AgentFailureKind.ContextWindowLimit,
+            failureReason: "Context burst boundary reached");
+
+        var reloaded = orchestration.GetSession(session.SessionId)!;
+        var updatedTask = reloaded.Plan.Tasks.Single();
+
+        await Assert.That(updatedTask.RecoveryState.LastFailureKind).IsEqualTo(AgentFailureKind.ContextWindowLimit);
+        await Assert.That(updatedTask.RecoveryState.LastFailureReason).IsEqualTo("Context burst boundary reached");
+    }
+
+    [Test]
+    public async Task BlazorAgent_Checkpoint_Summary_Defaults_When_Whitespace_Summary()
+    {
+        var options = CreateOptions("worker-default-checkpoint-summary");
+        using var store = new SqliteOrchestrationSessionStore(options);
+        IAgentCatalog catalog = new EmbeddedAgentCatalog();
+        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
+        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
+        var task = session.Plan.Tasks.Single();
+
+        var json = WorkerAgentTools.BlazorAgent(orchestration, session.SessionId, task.TaskId, createCheckpoint: true, checkpointSummary: "   ");
+
+        using var document = JsonDocument.Parse(json);
+        var checkpoint = document.RootElement.GetProperty("checkpoints")[0];
+        await Assert.That(checkpoint.GetProperty("summary").GetString()).IsEqualTo("Checkpoint recorded.");
+    }
+
+    [Test]
+    public async Task BlazorAgent_Activates_With_NonNull_Empty_Collections_And_Whitespace_Summary()
+    {
+        var options = CreateOptions("worker-empty-collections-result");
+        using var store = new SqliteOrchestrationSessionStore(options);
+        IAgentCatalog catalog = new EmbeddedAgentCatalog();
+        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
+        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
+        var task = session.Plan.Tasks.Single();
+
+        var json = WorkerAgentTools.BlazorAgent(
+            orchestration,
+            session.SessionId,
+            task.TaskId,
+            workSummary: "   ",
+            artifacts: [],
+            handoffItems: [],
+            risks: [],
+            markComplete: false);
+
+        using var document = JsonDocument.Parse(json);
+        var root = document.RootElement;
+        await Assert.That(root.GetProperty("status").GetString()).IsEqualTo("InProgress");
+        await Assert.That(root.GetProperty("shutdownRequired").GetBoolean()).IsFalse();
+        await Assert.That(root.TryGetProperty("executionPrompt", out var executionPrompt)).IsTrue();
+        await Assert.That(executionPrompt.GetString()).Contains("Assigned objective");
+        await Assert.That(root.TryGetProperty("latestResult", out _)).IsFalse();
     }
 
     [Test]
@@ -145,7 +231,7 @@ public class WorkerAgentAndCatalogToolsTests
             ("multiagent_avalonia_agent",    () => WorkerAgentTools.AvaloniaAgent(orchestration, "x", "x")),
             ("multiagent_maui_agent",        () => WorkerAgentTools.MauiAgent(orchestration, "x", "x")),
             ("multiagent_blazor_agent",      () => WorkerAgentTools.BlazorAgent(orchestration, "x", "x")),
-            ("multiagent_tester_agent",      () => WorkerAgentTools.TestAgent(orchestration, "x", "x")),
+            ("multiagent_test_agent",        () => WorkerAgentTools.TestAgent(orchestration, "x", "x")),
             ("multiagent_reviewer_agent",    () => WorkerAgentTools.ReviewerAgent(orchestration, "x", "x")),
         };
 

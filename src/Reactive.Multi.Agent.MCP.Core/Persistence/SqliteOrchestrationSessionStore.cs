@@ -13,7 +13,7 @@ public sealed class SqliteOrchestrationSessionStore : IOrchestrationSessionStore
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
+        WriteIndented = false,
         Converters = { new JsonStringEnumConverter() },
     };
 

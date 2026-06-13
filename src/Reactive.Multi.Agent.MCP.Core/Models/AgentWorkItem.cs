@@ -14,6 +14,8 @@ public sealed class AgentWorkItem
 
     public string AgentId { get; set; } = string.Empty;
 
+    public string AgentName { get; set; } = string.Empty;
+
     public string AgentToolName { get; set; } = string.Empty;
 
     public string AgentSessionId { get; set; } = string.Empty;
@@ -43,6 +45,10 @@ public sealed class AgentWorkItem
     public string Scratchpad { get; set; } = string.Empty;
 
     public AgentTaskResult? LatestResult { get; set; }
+
+    public bool ShutdownRequired { get; set; }
+
+    public DateTimeOffset? CompletedAtUtc { get; set; }
 
     public DateTimeOffset LastUpdatedUtc { get; set; } = DateTimeOffset.UtcNow;
 
