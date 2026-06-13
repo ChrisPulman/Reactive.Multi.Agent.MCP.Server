@@ -25,8 +25,7 @@ public class BlankParameterValidationTests
 
         var json = OrchestratorTools.OrchestrateRequest(orchestration, "");
 
-        AssertSafeErrorContainsParamName(json, "userRequest");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "userRequest")).IsTrue();
     }
 
     [Test]
@@ -36,8 +35,7 @@ public class BlankParameterValidationTests
 
         var json = OrchestratorTools.SessionStatus(orchestration, "");
 
-        AssertSafeErrorContainsParamName(json, "sessionId");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "sessionId")).IsTrue();
     }
 
     [Test]
@@ -47,8 +45,7 @@ public class BlankParameterValidationTests
 
         var json = OrchestratorTools.FinalizeSession(orchestration, "");
 
-        AssertSafeErrorContainsParamName(json, "sessionId");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "sessionId")).IsTrue();
     }
 
     [Test]
@@ -58,8 +55,7 @@ public class BlankParameterValidationTests
 
         var json = OrchestratorTools.ResumeTask(orchestration, "", "task-1", "csharp");
 
-        AssertSafeErrorContainsParamName(json, "sessionId");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "sessionId")).IsTrue();
     }
 
     [Test]
@@ -69,8 +65,7 @@ public class BlankParameterValidationTests
 
         var json = OrchestratorTools.ResumeTask(orchestration, session.SessionId, "", "csharp");
 
-        AssertSafeErrorContainsParamName(json, "taskId");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "taskId")).IsTrue();
     }
 
     [Test]
@@ -81,8 +76,7 @@ public class BlankParameterValidationTests
 
         var json = OrchestratorTools.ResumeTask(orchestration, session.SessionId, task.TaskId, "");
 
-        AssertSafeErrorContainsParamName(json, "agentId");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "agentId")).IsTrue();
     }
 
     [Test]
@@ -92,8 +86,7 @@ public class BlankParameterValidationTests
 
         var json = OrchestratorTools.ResumeOrchestration(orchestration, "");
 
-        AssertSafeErrorContainsParamName(json, "sessionId");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "sessionId")).IsTrue();
     }
 
     [Test]
@@ -103,8 +96,7 @@ public class BlankParameterValidationTests
 
         var json = OrchestratorTools.UpdateSupervisorAction(orchestration, "", "action-1", SupervisorActionState.Completed);
 
-        AssertSafeErrorContainsParamName(json, "sessionId");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "sessionId")).IsTrue();
     }
 
     [Test]
@@ -114,8 +106,7 @@ public class BlankParameterValidationTests
 
         var json = OrchestratorTools.UpdateSupervisorAction(orchestration, session.SessionId, "", SupervisorActionState.Completed);
 
-        AssertSafeErrorContainsParamName(json, "actionId");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "actionId")).IsTrue();
     }
 
     [Test]
@@ -125,8 +116,7 @@ public class BlankParameterValidationTests
 
         var json = OrchestratorTools.ApplySupervisorActionEscalation(orchestration, "");
 
-        AssertSafeErrorContainsParamName(json, "sessionId");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "sessionId")).IsTrue();
     }
 
     [Test]
@@ -136,8 +126,7 @@ public class BlankParameterValidationTests
 
         var json = OrchestratorTools.RecordHeartbeat(orchestration, "");
 
-        AssertSafeErrorContainsParamName(json, "sessionId");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "sessionId")).IsTrue();
     }
 
     [Test]
@@ -147,8 +136,7 @@ public class BlankParameterValidationTests
 
         var json = OrchestratorTools.RunMaintenanceSweep(orchestration, "");
 
-        AssertSafeErrorContainsParamName(json, "sessionId");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "sessionId")).IsTrue();
     }
 
     [Test]
@@ -158,8 +146,7 @@ public class BlankParameterValidationTests
 
         var json = OrchestratorTools.GetMaintenanceReport(orchestration, "");
 
-        AssertSafeErrorContainsParamName(json, "sessionId");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "sessionId")).IsTrue();
     }
 
     [Test]
@@ -169,8 +156,7 @@ public class BlankParameterValidationTests
 
         var json = OrchestratorTools.GetMaintenanceHistory(orchestration, "");
 
-        AssertSafeErrorContainsParamName(json, "sessionId");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "sessionId")).IsTrue();
     }
 
     [Test]
@@ -180,8 +166,7 @@ public class BlankParameterValidationTests
 
         var json = OrchestratorTools.ApplyAutomaticPolicy(orchestration, "", "task-1", "csharp");
 
-        AssertSafeErrorContainsParamName(json, "sessionId");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "sessionId")).IsTrue();
     }
 
     [Test]
@@ -191,8 +176,7 @@ public class BlankParameterValidationTests
 
         var json = OrchestratorTools.ApplyAutomaticPolicy(orchestration, session.SessionId, "", "csharp");
 
-        AssertSafeErrorContainsParamName(json, "taskId");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "taskId")).IsTrue();
     }
 
     [Test]
@@ -203,8 +187,7 @@ public class BlankParameterValidationTests
 
         var json = OrchestratorTools.ApplyAutomaticPolicy(orchestration, session.SessionId, task.TaskId, "");
 
-        AssertSafeErrorContainsParamName(json, "agentId");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "agentId")).IsTrue();
     }
 
     [Test]
@@ -214,8 +197,7 @@ public class BlankParameterValidationTests
 
         var json = OrchestratorTools.SupervisorStatus(orchestration, "");
 
-        AssertSafeErrorContainsParamName(json, "sessionId");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "sessionId")).IsTrue();
     }
 
     [Test]
@@ -225,8 +207,7 @@ public class BlankParameterValidationTests
 
         var json = OrchestratorTools.SupervisorPlan(orchestration, "");
 
-        AssertSafeErrorContainsParamName(json, "sessionId");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "sessionId")).IsTrue();
     }
 
     // ── Worker agent tools (all route through DispatchAgent) ────────────────
@@ -238,8 +219,7 @@ public class BlankParameterValidationTests
 
         var json = WorkerAgentTools.CSharpAgent(orchestration, "", "task-1");
 
-        AssertSafeErrorContainsParamName(json, "sessionId");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "sessionId")).IsTrue();
     }
 
     [Test]
@@ -249,8 +229,7 @@ public class BlankParameterValidationTests
 
         var json = WorkerAgentTools.CSharpAgent(orchestration, session.SessionId, "");
 
-        AssertSafeErrorContainsParamName(json, "taskId");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "taskId")).IsTrue();
     }
 
     [Test]
@@ -260,8 +239,7 @@ public class BlankParameterValidationTests
 
         var json = WorkerAgentTools.BlazorAgent(orchestration, "", "task-1");
 
-        AssertSafeErrorContainsParamName(json, "sessionId");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "sessionId")).IsTrue();
     }
 
     [Test]
@@ -271,8 +249,7 @@ public class BlankParameterValidationTests
 
         var json = WorkerAgentTools.BlazorAgent(orchestration, session.SessionId, "");
 
-        AssertSafeErrorContainsParamName(json, "taskId");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "taskId")).IsTrue();
     }
 
     // ── Catalog tools ────────────────────────────────────────────────────────
@@ -284,8 +261,7 @@ public class BlankParameterValidationTests
 
         var json = AgentCatalogTools.GetAgent(catalog, "");
 
-        AssertSafeErrorContainsParamName(json, "id");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "id")).IsTrue();
     }
 
     [Test]
@@ -295,28 +271,19 @@ public class BlankParameterValidationTests
 
         var json = AgentCatalogTools.GetAgent(catalog, "   ");
 
-        AssertSafeErrorContainsParamName(json, "id");
-        await Assert.That(true).IsTrue();
+        await Assert.That(SafeErrorContainsParamName(json, "id")).IsTrue();
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    /// <summary>
-    /// Asserts that the JSON response is a safe error envelope with ok=false
-    /// and that the error message identifies the blank parameter by name.
-    /// </summary>
-    private static void AssertSafeErrorContainsParamName(string json, string paramName)
+    private static bool SafeErrorContainsParamName(string json, string paramName)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
         var ok = root.GetProperty("ok").GetBoolean();
         var message = root.GetProperty("error").GetProperty("message").GetString() ?? string.Empty;
 
-        if (ok)
-            throw new Exception($"Expected ok=false for blank '{paramName}' but got ok=true. Response: {json}");
-
-        if (!message.Contains(paramName, StringComparison.OrdinalIgnoreCase))
-            throw new Exception($"Expected error message to contain '{paramName}' but got: {message}");
+        return !ok && message.Contains(paramName, StringComparison.OrdinalIgnoreCase);
     }
 
     private static (IOrchestrationService orchestration, OrchestrationSession session) CreateSession(string folderPrefix)

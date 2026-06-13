@@ -6,15 +6,15 @@ Reactive Multi Agent MCP Server is a .NET 10 Model Context Protocol server for h
 
 It gives AI assistants a durable, structured orchestration layer for decomposing complex requests into typed tasks, routing them to domain-specialist agents, tracking execution waves with dependency awareness, recording structured artifacts, and persisting session state across restarts — all backed by a local SQLite store with no external dependencies.
 
-It is implemented in C# on `net10.0` using `ModelContextProtocol` `1.2.0`.
+It is implemented in C# on `net10.0` using `ModelContextProtocol` `1.4.0`.
 
 ## Quick Install
 
 Click to install in your preferred environment:
 
-[![VS Code - Install Reactive Multi Agent MCP](https://img.shields.io/badge/VS_Code-Install_Reactive_Multi_Agent_MCP-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://vscode.dev/redirect/mcp/install?name=reactive-multi-agent-mcp-server&config=%7B%22type%22%3A%22stdio%22%2C%22command%22%3A%22dnx%22%2C%22args%22%3A%5B%22CP.Reactive.Multi.Agent.MCP.Server%400.*%22%2C%22--yes%22%5D%7D)
-[![VS Code Insiders - Install Reactive Multi Agent MCP](https://img.shields.io/badge/VS_Code_Insiders-Install_Reactive_Multi_Agent_MCP-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=reactive-multi-agent-mcp-server&config=%7B%22type%22%3A%22stdio%22%2C%22command%22%3A%22dnx%22%2C%22args%22%3A%5B%22CP.Reactive.Multi.Agent.MCP.Server%400.*%22%2C%22--yes%22%5D%7D&quality=insiders)
-[![Visual Studio - Install Reactive Multi Agent MCP](https://img.shields.io/badge/Visual_Studio-Install_Reactive_Multi_Agent_MCP-5C2D91?style=flat-square&logo=visualstudio&logoColor=white)](https://vs-open.link/mcp-install?%7B%22name%22%3A%22CP.Reactive.Multi.Agent.MCP.Server%22%2C%22type%22%3A%22stdio%22%2C%22command%22%3A%22dnx%22%2C%22args%22%3A%5B%22CP.Reactive.Multi.Agent.MCP.Server%400.*%22%2C%22--yes%22%5D%7D)
+[![VS Code - Install Reactive Multi Agent MCP](https://img.shields.io/badge/VS_Code-Install_Reactive_Multi_Agent_MCP-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://vscode.dev/redirect/mcp/install?name=reactive-multi-agent-mcp-server&config=%7B%22type%22%3A%22stdio%22%2C%22command%22%3A%22dnx%22%2C%22args%22%3A%5B%22CP.Reactive.Multi.Agent.MCP.Server%401.*%22%2C%22--yes%22%5D%7D)
+[![VS Code Insiders - Install Reactive Multi Agent MCP](https://img.shields.io/badge/VS_Code_Insiders-Install_Reactive_Multi_Agent_MCP-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=reactive-multi-agent-mcp-server&config=%7B%22type%22%3A%22stdio%22%2C%22command%22%3A%22dnx%22%2C%22args%22%3A%5B%22CP.Reactive.Multi.Agent.MCP.Server%401.*%22%2C%22--yes%22%5D%7D&quality=insiders)
+[![Visual Studio - Install Reactive Multi Agent MCP](https://img.shields.io/badge/Visual_Studio-Install_Reactive_Multi_Agent_MCP-5C2D91?style=flat-square&logo=visualstudio&logoColor=white)](https://vs-open.link/mcp-install?%7B%22name%22%3A%22CP.Reactive.Multi.Agent.MCP.Server%22%2C%22type%22%3A%22stdio%22%2C%22command%22%3A%22dnx%22%2C%22args%22%3A%5B%22CP.Reactive.Multi.Agent.MCP.Server%401.*%22%2C%22--yes%22%5D%7D)
 
 > **Note:** These install links are prepared for the intended NuGet package identity `CP.Reactive.Multi.Agent.MCP.Server`.
 > If the latest package has not been published yet, use the manual source-build configuration below.
@@ -30,6 +30,7 @@ Without structured orchestration, AI agents tackle complex requests sequentially
 - **Track** structured artifacts (source files, config, blueprints, test plans, reviews) and handoff items across agent boundaries
 - **Recover** from context-window limits, network loss, and token budget exhaustion with automated checkpoint, retry, and resume policies
 - **Supervise** in-flight sessions: detect stalled tasks, silent heartbeats, stale supervisor actions, and escalate automatically
+- **Manage** specialist sub-agent lifecycles with meaningful `AgentName` values, stable `AgentSessionId` correlation, and explicit shutdown instructions when work completes
 - **Audit** every maintenance sweep with trend-aware health reports (stable / improving / worsening) persisted per session
 
 This server is intended for:
@@ -49,6 +50,7 @@ Reactive Multi Agent organises work using a hub-and-spoke model with a central o
 | **Execution wave** | A named phase grouping tasks that can run concurrently — earlier waves must complete before later ones begin |
 | **Task / work item** | A single unit of work assigned to one specialist agent with acceptance criteria, skills, tools, and dependency links |
 | **Specialist agent** | A named domain worker (e.g. `csharp`, `reactiveui`, `tester`) that executes a task and returns structured artifacts |
+| **Agent-scoped session** | A stable `AgentSessionId` paired with a human-readable `AgentName` so MCP clients can spawn and close the correct specialist sub-agent |
 | **Artifact** | A typed output from an agent: source file, config file, workflow, blueprint, migration plan, review, test plan, prompt, resource, or package metadata |
 | **Handoff item** | A non-artifact communication item passed from one agent to downstream consumers — may be blocking or advisory |
 | **Checkpoint** | A named snapshot of an agent's in-progress work that allows resumption after a context reset or failure |
@@ -84,7 +86,7 @@ All session state is stored locally in SQLite — no external services or API ke
 
 | Path | Purpose |
 |------|---------|
-| `~/.reactive-multi-agent-mcp/orchestration.sqlite3` | Full session state, tasks, supervisor actions, maintenance history |
+| `<LocalApplicationData>/ReactiveMultiAgentMcp/orchestration.sqlite3` | Full session state, tasks, supervisor actions, maintenance history when launched through the hosted MCP server |
 
 ---
 
@@ -95,13 +97,48 @@ When this server is active, agents should follow the **Reactive Multi Agent Prot
 1. Call `multiagent_orchestrate_request` with the user's top-level request to create the session and get the full execution plan.
 2. Inspect `session.plan.executionWaves` — work through waves in `phaseOrder` order.
 3. Within each wave, dispatch all tasks to their assigned specialist agent tools in parallel when the client supports parallel tool calls.
-4. Each specialist agent tool call returns an `AgentTaskPacket` with its `executionPrompt` — use this prompt as the context for the agent's work.
+4. Each specialist agent tool call returns an `AgentTaskPacket` with `agentName`, `agentSessionId`, `executionPrompt`, `lifecycleInstruction`, and `nextSteps`. Use `agentName` as the visible sub-agent name and keep `agentSessionId` as the correlation id.
 5. When a specialist agent produces output, call its tool again with `workSummary`, `artifacts`, `handoffItems`, `risks`, and `markComplete: true`.
-6. If an agent hits a context limit, call its tool with `createCheckpoint: true` and `checkpointSummary`, then later resume with `multiagent_resume_task`.
-7. Periodically call `multiagent_supervisor_plan` to check for stalled tasks, silent heartbeats, and supervisor actions that need acknowledgement.
-8. Call `multiagent_get_maintenance_report` on a schedule to receive trend-aware health diagnostics and auto-applied policy actions.
-9. Call `multiagent_finalize_session` to merge all completed specialist outputs into a unified response.
-10. Use the `create_multi_agent_plan`, `create_specialist_agent_prompt`, and `merge_multi_agent_results` prompts as guided shortcuts for the above workflow.
+6. If the returned packet has `shutdownRequired: true`, close the named sub-agent immediately and do not continue work in that agent context.
+7. If an agent hits a context limit, call its tool with `createCheckpoint: true` and `checkpointSummary`, then later resume with `multiagent_resume_task`.
+8. Periodically call `multiagent_supervisor_plan` to check for stalled tasks, silent heartbeats, and supervisor actions that need acknowledgement.
+9. Call `multiagent_get_maintenance_report` on a schedule to receive trend-aware health diagnostics and auto-applied policy actions.
+10. Call `multiagent_finalize_session` to merge all completed specialist outputs into a unified response.
+11. Use the `create_multi_agent_plan`, `create_specialist_agent_prompt`, and `merge_multi_agent_results` prompts as guided shortcuts for the above workflow.
+
+### Agent task packet lifecycle
+
+Every worker tool returns an `AgentTaskPacket`. MCP clients should treat these fields as lifecycle instructions:
+
+| Field | Meaning |
+|-------|---------|
+| `agentName` | Human-readable sub-agent name such as `Blazor Agent - task-1`; use this when spawning or displaying the specialist agent |
+| `agentSessionId` | Stable agent-scoped id for correlating later updates, checkpoints, resumes, and shutdown |
+| `lifecycleInstruction` | Short instruction telling the client whether to spawn/continue or close the sub-agent |
+| `shutdownRequired` | `true` once the task is complete or the server has already marked the agent session for release |
+| `completedAtUtc` | Completion timestamp set when `markComplete: true` records the final specialist result |
+| `executionPrompt` | Either the work prompt for active tasks or a shutdown prompt for completed tasks |
+| `nextSteps` | Ordered operational guidance for progressing, waiting, checkpointing, retrying, or closing the sub-agent |
+
+When `shutdownRequired` is `true`, the correct client behavior is to close the named sub-agent and release the agent-scoped session. Start a fresh named sub-agent only after a later task packet asks for additional work.
+
+### MCP safety contract
+
+All tools and resources execute through a safe JSON wrapper. If a tool fails validation or throws, the server returns an error envelope instead of terminating the MCP host:
+
+```json
+{
+  "ok": false,
+  "operation": "multiagent_session_status",
+  "error": {
+    "type": "ArgumentException",
+    "message": "sessionId is required."
+  },
+  "guidance": "The MCP server handled the failure and returned a safe error payload instead of terminating the host process."
+}
+```
+
+Prompt failures return a safe fallback text response naming the failed operation and exception. Blank required parameters are reported in the same safe shape so clients can ask the user for the missing value.
 
 ---
 
@@ -448,7 +485,7 @@ Skills: Blazor WebAssembly, Blazor Server, Razor components, interop, Blazor Rea
 #### `multiagent_test_agent`
 Activate or update the **Test Agent** — owns verification, testing, and regression work.
 
-Skills: xUnit, NUnit, MSTest, test design, coverage, FluentAssertions.
+Skills: TUnit, TUnit assertions, test design, coverage, regression verification.
 
 ---
 
@@ -580,50 +617,79 @@ Returns a formatted synthesis prompt showing the session status, completed/total
 ## Solution layout
 
 ```
+README.md                                # Package README and feature guide
+.mcp/server.json                         # MCP package manifest for dnx-based clients
+skills/Reactive-Multi-Agent/SKILL.md     # Codex skill shipped with the MCP server package
 src/
 ├── Reactive.Multi.Agent.MCP.Core/        # Models, abstractions, services, persistence
 ├── Reactive.Multi.Agent.MCP.Knowledge/   # Embedded agent catalog (JSON profiles)
 ├── Reactive.Multi.Agent.MCP.Server/      # MCP host, tool/resource/prompt registration
 ├── Reactive.Multi.Agent.MCP.Tests/       # Unit and integration tests
-└── Reactive.Multi.Agent.MCP.Server.sln   # Solution file
+└── Reactive.Multi.Agent.MCP.Server.slnx  # Solution file
 ```
 
 ---
 
 ## Configuration
 
-The server stores all data under `~/.reactive-multi-agent-mcp/` by default. No environment variables or connection strings are required.
+The hosted MCP server stores all data under the .NET `LocalApplicationData` folder by default, in a `ReactiveMultiAgentMcp` child directory. On Windows this is typically `%LocalAppData%\ReactiveMultiAgentMcp`. No external database, API key, or connection string is required.
 
 | Path | Purpose |
 |------|---------|
-| `~/.reactive-multi-agent-mcp/orchestration.sqlite3` | Full session state: tasks, supervisor actions, execution ledger, maintenance history |
+| `<LocalApplicationData>/ReactiveMultiAgentMcp/orchestration.sqlite3` | Full session state: tasks, supervisor actions, execution ledger, maintenance history |
 
-Configuration can be overridden by providing a `ReactiveMultiAgentOptions` instance when hosting the server programmatically:
+The executable reads these environment variables at startup:
+
+| Environment variable | Default | Purpose |
+|----------------------|---------|---------|
+| `REACTIVE_MULTI_AGENT_MCP_STATE_ROOT` | `<LocalApplicationData>/ReactiveMultiAgentMcp` | Root folder for persisted orchestration state |
+| `REACTIVE_MULTI_AGENT_MCP_PACKAGE_ID` | `CP.Reactive.Multi.Agent.MCP.Server` | Package id reported by server metadata and install guidance |
+| `REACTIVE_MULTI_AGENT_MCP_SERVER_ID` | `io.github.chrispulman/reactive-multi-agent-mcp-server` | MCP server identifier |
+
+Configuration can also be overridden by providing a `ReactiveMultiAgentOptions` instance when hosting the server programmatically:
 
 | Property | Default | Description |
 |----------|---------|-------------|
-| `StateRootPath` | `~/.reactive-multi-agent-mcp` | Root folder for persisted orchestration state |
+| `StateRootPath` | Hosted default: `<LocalApplicationData>/ReactiveMultiAgentMcp`; direct options default: `~/.reactive-multi-agent-mcp` | Root folder for persisted orchestration state |
 | `SessionDatabasePath` | `<StateRootPath>/orchestration.sqlite3` | SQLite database path |
 | `PackageId` | `CP.Reactive.Multi.Agent.MCP.Server` | NuGet package identifier |
 | `ServerId` | `io.github.chrispulman/reactive-multi-agent-mcp-server` | MCP server identifier |
+
+The packaged `.mcp/server.json` manifest uses `runtimeHint: "dnx"` and sets `DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1` and `DOTNET_NOLOGO=1` for quieter client startup.
+
+---
+
+## Packaged Codex skill
+
+The NuGet package includes `skills/Reactive-Multi-Agent/SKILL.md` alongside the MCP manifest. Use that skill when an agent needs operational instructions for this server: creating sessions, selecting specialists, spawning named sub-agents, recording heartbeats/checkpoints/results, applying recovery policies, finalizing sessions, and closing sub-agents once `shutdownRequired` is true.
 
 ---
 
 ## Build
 
 ```bash
-dotnet build src/Reactive.Multi.Agent.MCP.Server.sln
+dotnet build src/Reactive.Multi.Agent.MCP.Server.slnx
 ```
 
 ---
 
 ## Test
 
-Build first, then run the test project:
+Build first, then run the TUnit test project:
 
 ```bash
 dotnet test src/Reactive.Multi.Agent.MCP.Tests/Reactive.Multi.Agent.MCP.Tests.csproj
 ```
+
+To collect coverage:
+
+```bash
+dotnet test src/Reactive.Multi.Agent.MCP.Tests/Reactive.Multi.Agent.MCP.Tests.csproj --coverage --coverage-output coverage.cobertura.xml --coverage-output-format cobertura
+```
+
+The test suite covers MCP host registration, tool/resource/prompt payload contracts, safe error handling, blank-parameter validation, orchestration decomposition, lifecycle and shutdown packets, supervisor actions, automatic policies, persistence, maintenance reports, session history, and package-facing metadata.
+
+The latest verified local coverage for this suite is 98.08% line coverage and 90.64% branch coverage.
 
 ---
 
@@ -659,7 +725,7 @@ Use the badge links at the top of this file, or configure manually:
 {
   "type": "stdio",
   "command": "dnx",
-  "args": ["CP.Reactive.Multi.Agent.MCP.Server@0.*", "--yes"]
+  "args": ["CP.Reactive.Multi.Agent.MCP.Server@1.*", "--yes"]
 }
 ```
 
@@ -675,7 +741,7 @@ Clone the repository and configure your MCP client to launch the server from the
   "args": [
     "run",
     "--project",
-    "/path/to/Reactive.Multi.Agent.MCP.Server/src/Reactive.Multi.Agent.MCP.Server/Reactive.Multi.Agent.MCP.Server.csproj"
+    "/path/to/Reactive.Multi.Agent.MCP.Server/src/Reactive.Multi.Agent.MCP.Server/CP.Reactive.Multi.Agent.MCP.Server.csproj"
   ]
 }
 ```
@@ -692,7 +758,7 @@ Clone the repository and configure your MCP client to launch the server from the
         "args": [
           "run",
           "--project",
-          "/path/to/Reactive.Multi.Agent.MCP.Server/src/Reactive.Multi.Agent.MCP.Server/Reactive.Multi.Agent.MCP.Server.csproj"
+          "/path/to/Reactive.Multi.Agent.MCP.Server/src/Reactive.Multi.Agent.MCP.Server/CP.Reactive.Multi.Agent.MCP.Server.csproj"
         ]
       }
     }
@@ -712,7 +778,7 @@ Navigate to **Tools → Options → GitHub → Copilot → MCP Servers** and add
   "args": [
     "run",
     "--project",
-    "/path/to/Reactive.Multi.Agent.MCP.Server/src/Reactive.Multi.Agent.MCP.Server/Reactive.Multi.Agent.MCP.Server.csproj"
+    "/path/to/Reactive.Multi.Agent.MCP.Server/src/Reactive.Multi.Agent.MCP.Server/CP.Reactive.Multi.Agent.MCP.Server.csproj"
   ]
 }
 ```
@@ -727,7 +793,7 @@ Navigate to **Tools → Options → GitHub → Copilot → MCP Servers** and add
       "args": [
         "run",
         "--project",
-        "/path/to/Reactive.Multi.Agent.MCP.Server/src/Reactive.Multi.Agent.MCP.Server/Reactive.Multi.Agent.MCP.Server.csproj"
+        "/path/to/Reactive.Multi.Agent.MCP.Server/src/Reactive.Multi.Agent.MCP.Server/CP.Reactive.Multi.Agent.MCP.Server.csproj"
       ]
     }
   }

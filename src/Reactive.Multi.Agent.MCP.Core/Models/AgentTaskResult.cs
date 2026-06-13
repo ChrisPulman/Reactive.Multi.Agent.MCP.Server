@@ -12,6 +12,8 @@ public sealed class AgentTaskResult
 {
     public string AgentId { get; set; } = string.Empty;
 
+    public string AgentName { get; set; } = string.Empty;
+
     public string AgentToolName { get; set; } = string.Empty;
 
     public string Summary { get; set; } = string.Empty;
@@ -23,6 +25,8 @@ public sealed class AgentTaskResult
     public IReadOnlyList<string> Risks { get; set; } = [];
 
     public bool Completed { get; set; }
+
+    public bool ShutdownRequired { get; set; }
 
     public DateTimeOffset ReportedAtUtc { get; set; }
 }

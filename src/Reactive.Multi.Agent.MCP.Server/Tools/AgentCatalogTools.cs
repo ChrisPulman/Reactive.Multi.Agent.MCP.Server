@@ -19,10 +19,11 @@ public sealed class AgentCatalogTools
         => McpSafeExecutor.ExecuteJson("multiagent_agent_catalog_list", () =>
         {
             ArgumentNullException.ThrowIfNull(agentCatalog);
+            var agents = agentCatalog.GetAll();
             return new
             {
-                count = agentCatalog.GetAll().Count,
-                agents = agentCatalog.GetAll(),
+                count = agents.Count,
+                agents,
             };
         });
 

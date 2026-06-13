@@ -30,7 +30,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Reactive.Multi.Agent.MCP.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="" Link="README.md" />
     <None Include="..\..\.mcp\server.json" Pack="true" PackagePath=".mcp\server.json" Link=".mcp\server.json" />
+    <None Include="..\..\skills\Reactive-Multi-Agent\SKILL.md" Pack="true" PackagePath="skills\Reactive-Multi-Agent\SKILL.md" Link="skills\Reactive-Multi-Agent\SKILL.md" />
   </ItemGroup>
 </Project>

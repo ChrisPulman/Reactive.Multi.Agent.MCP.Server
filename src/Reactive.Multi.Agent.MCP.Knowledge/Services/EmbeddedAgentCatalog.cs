@@ -13,6 +13,11 @@ namespace Reactive.Multi.Agent.MCP.Knowledge.Services;
 /// suitable for scenarios where agent definitions are bundled with the application.</remarks>
 public sealed class EmbeddedAgentCatalog : IAgentCatalog
 {
+    private static readonly JsonSerializerOptions SerializerOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+    };
+
     private static readonly Lazy<IReadOnlyList<AgentProfile>> Profiles = new(LoadProfiles);
 
     public IReadOnlyList<AgentProfile> GetAll() => Profiles.Value;
@@ -27,18 +32,17 @@ public sealed class EmbeddedAgentCatalog : IAgentCatalog
             return GetAll();
         }
 
-        var lowered = query.ToLowerInvariant();
         return Profiles.Value
             .Where(profile =>
-                profile.Id.Contains(lowered, StringComparison.OrdinalIgnoreCase)
-                || profile.Domain.Contains(lowered, StringComparison.OrdinalIgnoreCase)
-                || profile.Category.Contains(lowered, StringComparison.OrdinalIgnoreCase)
-                || profile.DisplayName.Contains(lowered, StringComparison.OrdinalIgnoreCase)
-                || profile.Summary.Contains(lowered, StringComparison.OrdinalIgnoreCase)
-                || profile.Role.Contains(lowered, StringComparison.OrdinalIgnoreCase)
-                || profile.DefaultSkills.Any(skill => skill.Contains(lowered, StringComparison.OrdinalIgnoreCase))
-                || profile.DefaultTools.Any(tool => tool.Contains(lowered, StringComparison.OrdinalIgnoreCase))
-                || profile.RoutingKeywords.Any(keyword => keyword.Contains(lowered, StringComparison.OrdinalIgnoreCase)))
+                profile.Id.Contains(query, StringComparison.OrdinalIgnoreCase)
+                || profile.Domain.Contains(query, StringComparison.OrdinalIgnoreCase)
+                || profile.Category.Contains(query, StringComparison.OrdinalIgnoreCase)
+                || profile.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase)
+                || profile.Summary.Contains(query, StringComparison.OrdinalIgnoreCase)
+                || profile.Role.Contains(query, StringComparison.OrdinalIgnoreCase)
+                || profile.DefaultSkills.Any(skill => skill.Contains(query, StringComparison.OrdinalIgnoreCase))
+                || profile.DefaultTools.Any(tool => tool.Contains(query, StringComparison.OrdinalIgnoreCase))
+                || profile.RoutingKeywords.Any(keyword => keyword.Contains(query, StringComparison.OrdinalIgnoreCase)))
             .OrderBy(profile => profile.Category, StringComparer.OrdinalIgnoreCase)
             .ThenBy(profile => profile.DisplayName, StringComparer.OrdinalIgnoreCase)
             .ToArray();
@@ -59,10 +63,8 @@ public sealed class EmbeddedAgentCatalog : IAgentCatalog
                 ?? throw new InvalidOperationException($"Embedded resource '{resourceName}' was not found.");
             using var reader = new StreamReader(stream);
             var json = reader.ReadToEnd();
-            var profile = JsonSerializer.Deserialize<AgentProfile>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-            }) ?? throw new InvalidOperationException($"Embedded agent profile '{resourceName}' could not be deserialized.");
+            var profile = JsonSerializer.Deserialize<AgentProfile>(json, SerializerOptions)
+                ?? throw new InvalidOperationException($"Embedded agent profile '{resourceName}' could not be deserialized.");
             profiles.Add(profile);
         }
 

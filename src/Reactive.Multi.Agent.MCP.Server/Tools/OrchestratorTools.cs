@@ -246,6 +246,7 @@ public sealed class OrchestratorTools
                 {
                     task.TaskId,
                     task.AgentId,
+                    task.AgentName,
                     task.Title,
                     task.Reason,
                 }).ToArray(),
@@ -299,12 +300,15 @@ public sealed class OrchestratorTools
             {
                 task.TaskId,
                 task.AgentId,
+                task.AgentName,
                 task.AgentToolName,
+                task.AgentSessionId,
                 task.Title,
                 task.Objective,
                 task.PhaseName,
                 task.PhaseOrder,
                 task.SequenceOrder,
+                task.ShutdownRequired,
                 dependencyTaskIds = task.Dependencies.Where(dependency => dependency.Kind == DependencyKind.Blocking).Select(dependency => dependency.TaskId).ToArray(),
             }).ToArray(),
         };

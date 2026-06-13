@@ -14,6 +14,8 @@ public sealed class NextTaskCandidate
 
     public string AgentId { get; set; } = string.Empty;
 
+    public string AgentName { get; set; } = string.Empty;
+
     public string AgentToolName { get; set; } = string.Empty;
 
     public string Title { get; set; } = string.Empty;

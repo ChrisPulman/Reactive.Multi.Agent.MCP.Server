@@ -17,6 +17,8 @@ public sealed class AgentTaskPacket
 
     public string AgentId { get; set; } = string.Empty;
 
+    public string AgentName { get; set; } = string.Empty;
+
     public string AgentToolName { get; set; } = string.Empty;
 
     public string AgentSessionId { get; set; } = string.Empty;
@@ -51,6 +53,10 @@ public sealed class AgentTaskPacket
 
     public IReadOnlyList<string> NextSteps { get; set; } = [];
 
+    public bool ShutdownRequired { get; set; }
+
+    public string LifecycleInstruction { get; set; } = string.Empty;
+
     public string ArtifactSchemaHint { get; set; } = string.Empty;
 
     public ContextWindowBudget ContextWindowBudget { get; set; } = new();
@@ -64,6 +70,8 @@ public sealed class AgentTaskPacket
     public IReadOnlyList<string> ResumeMemoryReloadItems { get; set; } = [];
 
     public AgentTaskResult? LatestResult { get; set; }
+
+    public DateTimeOffset? CompletedAtUtc { get; set; }
 
     public DateTimeOffset LastHeartbeatUtc { get; set; }
 }

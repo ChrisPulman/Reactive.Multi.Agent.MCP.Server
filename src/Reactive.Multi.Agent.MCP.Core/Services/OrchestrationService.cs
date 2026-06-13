@@ -29,7 +29,16 @@ public sealed class OrchestrationService(
         var plan = requestDecomposer.CreatePlan(request);
         foreach (var task in plan.Tasks)
         {
-            task.AgentSessionId = $"{sessionId}-{task.TaskId}-{task.AgentId}";
+            if (this._profiles.TryGetValue(task.AgentId, out var profile))
+            {
+                task.AgentName = string.IsNullOrWhiteSpace(task.AgentName)
+                    ? BuildAgentName(profile, task.TaskId)
+                    : task.AgentName.Trim();
+            }
+
+            task.AgentSessionId = BuildAgentSessionId(sessionId, task);
+            task.ShutdownRequired = false;
+            task.CompletedAtUtc = null;
             task.LastUpdatedUtc = now;
             task.LastHeartbeatUtc = now;
         }
@@ -70,6 +79,7 @@ public sealed class OrchestrationService(
     {
         var session = sessionStore.Load(sessionId)
             ?? throw new InvalidOperationException($"Unknown orchestration session '{sessionId}'.");
+        this.EnsureTaskIdentities(session);
 
         var now = DateTimeOffset.UtcNow;
         var alerts = new List<SupervisorAlert>();
@@ -201,7 +211,7 @@ public sealed class OrchestrationService(
             {
                 alerts.Add(new SupervisorAlert
                 {
-                    TaskId = action.ActionId.Contains(":", StringComparison.Ordinal) ? action.ActionId.Split(':')[^1] : string.Empty,
+                    TaskId = ExtractActionTargetId(action.ActionId),
                     AgentId = string.Empty,
                     Kind = SupervisorAlertKind.StaleSupervisorAction,
                     Severity = action.Escalation == SupervisorActionEscalation.Critical ? "critical" : "warning",
@@ -232,6 +242,7 @@ public sealed class OrchestrationService(
     {
         var session = sessionStore.Load(sessionId)
             ?? throw new InvalidOperationException($"Unknown orchestration session '{sessionId}'.");
+        this.EnsureTaskIdentities(session);
         var supervisor = this.GetSupervisorStatus(sessionId, stalledAfterMinutes);
         var orderedActions = new List<string>();
         var actionIds = new List<string>();
@@ -298,6 +309,7 @@ public sealed class OrchestrationService(
         }
 
         var refreshed = sessionStore.Load(sessionId) ?? session;
+        this.EnsureTaskIdentities(refreshed);
         refreshed.SupervisorActions = MergeSupervisorActions(refreshed.SupervisorActions, actionRecords);
         refreshed.ExecutionLedger =
         [
@@ -558,16 +570,19 @@ public sealed class OrchestrationService(
     public AgentTaskPacket RecordAgentResult(string sessionId, string taskId, string agentId, string? workSummary = null, IReadOnlyList<AgentArtifact>? artifacts = null, IReadOnlyList<HandoffItem>? handoffItems = null, IReadOnlyList<string>? risks = null, bool markComplete = false)
     {
         var (session, task, profile) = this.ResolveTask(sessionId, taskId, agentId);
+        var now = DateTimeOffset.UtcNow;
         task.LatestResult = new AgentTaskResult
         {
             AgentId = profile.Id,
+            AgentName = task.AgentName,
             AgentToolName = profile.ToolName,
             Summary = string.IsNullOrWhiteSpace(workSummary) ? "Progress update recorded." : workSummary.Trim(),
             Artifacts = artifacts ?? [],
             HandoffItems = handoffItems ?? [],
             Risks = risks ?? [],
             Completed = markComplete,
-            ReportedAtUtc = DateTimeOffset.UtcNow,
+            ShutdownRequired = markComplete,
+            ReportedAtUtc = now,
         };
 
         task.Scratchpad = AppendScratchpad(task.Scratchpad, "Result summary", task.LatestResult.Summary);
@@ -587,15 +602,29 @@ public sealed class OrchestrationService(
         }
 
         task.Status = markComplete ? AgentTaskStatus.Completed : AgentTaskStatus.InProgress;
+        task.ShutdownRequired = markComplete;
+        task.CompletedAtUtc = markComplete ? now : null;
         task.RecoveryState.NeedsResume = false;
         task.RecoveryState.LastFailureKind = AgentFailureKind.None;
         task.RecoveryState.LastFailureReason = null;
         task.RecoveryState.ResumeInstructions = string.Empty;
+        task.RecoveryState.PolicyState.AutoCheckpointRecommended = false;
         task.RecoveryState.PolicyState.AutoResumeRecommended = false;
         task.RecoveryState.PolicyState.AutoRetryRecommended = false;
+        task.RecoveryState.PolicyState.PolicyReason = markComplete
+            ? "Task completed; named sub-agent should be shut down."
+            : task.RecoveryState.PolicyState.PolicyReason;
         session.ExecutionLedger = [.. session.ExecutionLedger, CreateLedgerEntry("task-result", $"Recorded result for {task.TaskId}", task.LatestResult.Summary, markComplete ? "completed" : "in-progress")];
+        if (markComplete)
+        {
+            session.ExecutionLedger =
+            [
+                .. session.ExecutionLedger,
+                CreateLedgerEntry("task-shutdown", $"Shutdown requested for {task.AgentName}", $"Task '{task.TaskId}' is complete; close agent session '{task.AgentSessionId}'.", "required"),
+            ];
+        }
+
         session = AutoCompleteRunActionIfTaskCompleted(session, task.TaskId, markComplete);
-        var now = DateTimeOffset.UtcNow;
         task.LastUpdatedUtc = now;
         task.LastHeartbeatUtc = now;
         session.LastHeartbeatUtc = now;
@@ -704,6 +733,7 @@ public sealed class OrchestrationService(
     {
         var session = sessionStore.Load(sessionId)
             ?? throw new InvalidOperationException($"Unknown orchestration session '{sessionId}'.");
+        this.EnsureTaskIdentities(session);
 
         var tasks = session.Plan.Tasks.OrderBy(task => task.PhaseOrder).ThenBy(task => task.SequenceOrder).ToList();
         var completed = tasks.Where(static task => task.Status == AgentTaskStatus.Completed).ToList();
@@ -763,7 +793,9 @@ public sealed class OrchestrationService(
             foreach (var task in completed)
             {
                 unified.AppendLine($"- {task.Title}");
+                unified.AppendLine($"  Agent: {task.AgentName} ({task.AgentSessionId})");
                 unified.AppendLine($"  Summary: {task.LatestResult?.Summary ?? "No summary recorded."}");
+                unified.AppendLine("  Lifecycle: task complete; sub-agent should be shut down.");
                 foreach (var artifact in task.LatestResult?.Artifacts ?? [])
                 {
                     unified.AppendLine($"  Artifact [{artifact.Kind}]: {artifact.Title} — {artifact.Summary}");
@@ -784,7 +816,7 @@ public sealed class OrchestrationService(
             {
                 var state = IsTaskReady(session, task) ? "ready" : "blocked";
                 var resume = task.RecoveryState.NeedsResume ? ", resume-required" : string.Empty;
-                unified.AppendLine($"- {task.Title} via {task.AgentToolName} ({state}{resume}, heartbeat {task.LastHeartbeatUtc:O})");
+                unified.AppendLine($"- {task.Title} via {task.AgentToolName} as {task.AgentName} ({state}{resume}, heartbeat {task.LastHeartbeatUtc:O})");
             }
         }
 
@@ -806,10 +838,14 @@ public sealed class OrchestrationService(
             {
                 task.TaskId,
                 task.AgentId,
+                task.AgentName,
                 task.AgentToolName,
+                task.AgentSessionId,
                 task.Title,
                 task.PhaseName,
                 task.Status,
+                ShutdownRequired = task.Status == AgentTaskStatus.Completed || task.ShutdownRequired,
+                task.CompletedAtUtc,
                 task.LastHeartbeatUtc,
                 task.ContextWindowBudget,
                 task.SubscriptionTokenBudget,
@@ -821,10 +857,13 @@ public sealed class OrchestrationService(
             {
                 task.TaskId,
                 task.AgentId,
+                task.AgentName,
                 task.AgentToolName,
+                task.AgentSessionId,
                 task.Title,
                 task.PhaseName,
                 task.Status,
+                ShutdownRequired = task.Status == AgentTaskStatus.Completed || task.ShutdownRequired,
                 task.LastHeartbeatUtc,
                 task.Dependencies,
                 Ready = IsTaskReady(session, task),
@@ -842,6 +881,7 @@ public sealed class OrchestrationService(
     {
         var session = sessionStore.Load(sessionId)
             ?? throw new InvalidOperationException($"Unknown orchestration session '{sessionId}'.");
+        this.EnsureTaskIdentities(session);
 
         var task = session.Plan.Tasks.FirstOrDefault(candidate =>
             candidate.TaskId.Equals(taskId, StringComparison.OrdinalIgnoreCase)
@@ -854,6 +894,27 @@ public sealed class OrchestrationService(
         }
 
         return (session, task, profile);
+    }
+
+    private void EnsureTaskIdentities(OrchestrationSession session)
+    {
+        foreach (var task in session.Plan.Tasks)
+        {
+            if (!this._profiles.TryGetValue(task.AgentId, out var profile))
+            {
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(task.AgentName))
+            {
+                task.AgentName = BuildAgentName(profile, task.TaskId);
+            }
+
+            if (string.IsNullOrWhiteSpace(task.AgentSessionId))
+            {
+                task.AgentSessionId = BuildAgentSessionId(session.SessionId, task);
+            }
+        }
     }
 
     private static OrchestrationSession AutoCompleteMatchingAction(OrchestrationSession session, string actionIdPrefix, string taskId, string completionReason)
@@ -895,6 +956,7 @@ public sealed class OrchestrationService(
             {
                 TaskId = task.TaskId,
                 AgentId = task.AgentId,
+                AgentName = task.AgentName,
                 AgentToolName = task.AgentToolName,
                 Title = task.Title,
                 Reason = task.RecoveryState.PolicyState.AutoCheckpointRecommended
@@ -913,12 +975,14 @@ public sealed class OrchestrationService(
             .ToArray();
 
         AgentCheckpoint? latestCheckpoint = task.Checkpoints.Count > 0 ? task.Checkpoints[task.Checkpoints.Count - 1] : null;
+        var shutdownRequired = task.Status == AgentTaskStatus.Completed || task.ShutdownRequired;
 
         return new AgentTaskPacket
         {
             SessionId = session.SessionId,
             TaskId = task.TaskId,
             AgentId = task.AgentId,
+            AgentName = task.AgentName,
             AgentToolName = task.AgentToolName,
             AgentSessionId = task.AgentSessionId,
             Status = task.Status,
@@ -934,8 +998,12 @@ public sealed class OrchestrationService(
             SuggestedTools = task.SuggestedTools,
             CompletionContract = profile.CompletionContract,
             Scratchpad = task.Scratchpad,
-            ExecutionPrompt = BuildExecutionPrompt(session, task, profile, blockingDependencies, latestCheckpoint),
-            NextSteps = BuildNextSteps(profile, task, blockingDependencies),
+            ExecutionPrompt = shutdownRequired
+                ? BuildShutdownPrompt(task)
+                : BuildExecutionPrompt(session, task, profile, blockingDependencies, latestCheckpoint),
+            NextSteps = BuildNextSteps(profile, task, blockingDependencies, shutdownRequired),
+            ShutdownRequired = shutdownRequired,
+            LifecycleInstruction = BuildLifecycleInstruction(task, shutdownRequired),
             ArtifactSchemaHint = "Artifacts must be structured objects with artifactId, kind, title, summary, optional filePath, uri, mediaType, and content. Handoff items must be structured objects with itemId, category, title, details, and isBlocking.",
             ContextWindowBudget = task.ContextWindowBudget,
             SubscriptionTokenBudget = task.SubscriptionTokenBudget,
@@ -943,9 +1011,13 @@ public sealed class OrchestrationService(
             RecoveryState = task.RecoveryState,
             ResumeMemoryReloadItems = latestCheckpoint?.MemoryReloadItems ?? BuildDefaultMemoryReloadItems(task),
             LatestResult = task.LatestResult,
+            CompletedAtUtc = task.CompletedAtUtc,
             LastHeartbeatUtc = task.LastHeartbeatUtc,
         };
     }
+
+    private static string BuildShutdownPrompt(AgentWorkItem task)
+        => $"Task '{task.TaskId}' is completed. Sub-agent '{task.AgentName}' with session '{task.AgentSessionId}' must be shut down now; do not continue work in this agent context.";
 
     private static string BuildExecutionPrompt(OrchestrationSession session, AgentWorkItem task, AgentProfile profile, IReadOnlyList<string> blockingDependencies, AgentCheckpoint? latestCheckpoint)
     {
@@ -1004,10 +1076,15 @@ public sealed class OrchestrationService(
         return builder.ToString().Trim();
     }
 
-    private static IReadOnlyList<string> BuildNextSteps(AgentProfile profile, AgentWorkItem task, IReadOnlyList<string> blockingDependencies)
+    private static IReadOnlyList<string> BuildNextSteps(AgentProfile profile, AgentWorkItem task, IReadOnlyList<string> blockingDependencies, bool shutdownRequired)
     {
         var nextSteps = new List<string>();
-        if (task.RecoveryState.NeedsResume)
+        if (shutdownRequired)
+        {
+            nextSteps.Add($"Shut down or close the named sub-agent '{task.AgentName}' for session '{task.AgentSessionId}'.");
+            nextSteps.Add("Start a fresh named sub-agent only if additional work is assigned in a new task packet.");
+        }
+        else if (task.RecoveryState.NeedsResume)
         {
             nextSteps.Add($"Resume the task using persisted checkpoint memory before continuing: {task.RecoveryState.ResumeInstructions}");
         }
@@ -1030,9 +1107,59 @@ public sealed class OrchestrationService(
             nextSteps.Add("Automatic policy recommends retrying once connectivity is restored.");
         }
 
-        nextSteps.Add("Record heartbeat updates during long-running work.");
-        nextSteps.Add($"Record structured artifacts and handoff items with {profile.ToolName}.");
+        if (!shutdownRequired)
+        {
+            nextSteps.Add("Record heartbeat updates during long-running work.");
+            nextSteps.Add($"Record structured artifacts and handoff items with {profile.ToolName}.");
+        }
+
         return nextSteps;
+    }
+
+    private static string BuildLifecycleInstruction(AgentWorkItem task, bool shutdownRequired)
+        => shutdownRequired
+            ? $"Task complete. Close sub-agent '{task.AgentName}' and release session '{task.AgentSessionId}'."
+            : $"Spawn or continue sub-agent '{task.AgentName}' with session '{task.AgentSessionId}'.";
+
+    private static string BuildAgentName(AgentProfile profile, string taskId)
+        => $"{profile.DisplayName} - {taskId}";
+
+    private static string BuildAgentSessionId(string sessionId, AgentWorkItem task)
+    {
+        var sessionPrefix = sessionId.Length <= 8 ? sessionId : sessionId[..8];
+        return $"{ToIdentifierSlug(task.AgentName)}-{sessionPrefix}";
+    }
+
+    private static string ToIdentifierSlug(string value)
+    {
+        var builder = new StringBuilder(value.Length);
+        var previousWasSeparator = false;
+
+        foreach (var character in value)
+        {
+            if (char.IsLetterOrDigit(character))
+            {
+                builder.Append(char.ToLowerInvariant(character));
+                previousWasSeparator = false;
+                continue;
+            }
+
+            if (!previousWasSeparator && builder.Length > 0)
+            {
+                builder.Append('-');
+                previousWasSeparator = true;
+            }
+        }
+
+        return builder.ToString().Trim('-') is { Length: > 0 } slug ? slug : "agent";
+    }
+
+    private static string ExtractActionTargetId(string actionId)
+    {
+        var separatorIndex = actionId.LastIndexOf(':');
+        return separatorIndex >= 0 && separatorIndex < actionId.Length - 1
+            ? actionId[(separatorIndex + 1)..]
+            : string.Empty;
     }
 
     private static bool ShouldAutoApplyDuringMaintenance(AgentWorkItem task)
