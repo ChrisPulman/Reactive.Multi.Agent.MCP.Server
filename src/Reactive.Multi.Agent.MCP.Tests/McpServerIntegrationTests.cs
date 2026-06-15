@@ -66,6 +66,17 @@ public class McpServerIntegrationTests
 
     [Test]
     [Timeout(30_000)]
+    public async Task OrchestrateRequest_Tool_Is_Discoverable_With_Required_First_Call_Description(CancellationToken cancellationToken)
+    {
+        var tools = await _client.ListToolsAsync(cancellationToken: cancellationToken);
+        var tool = tools.Single(candidate => candidate.Name == "multiagent_orchestrate_request");
+
+        await Assert.That(tool.Description).Contains("Create a new durable orchestration session");
+        await Assert.That(tool.Description).Contains("Call this before any specialist worker agent tool");
+    }
+
+    [Test]
+    [Timeout(30_000)]
     public async Task Server_Lists_4_Static_Resources(CancellationToken cancellationToken)
     {
         var resources = await _client.ListResourcesAsync(cancellationToken: cancellationToken);

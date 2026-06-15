@@ -2,6 +2,7 @@ using ModelContextProtocol.Server;
 using Reactive.Multi.Agent.MCP.Core.Abstractions;
 using Reactive.Multi.Agent.MCP.Core.Models;
 using Reactive.Multi.Agent.MCP.Server.Infrastructure;
+using System.ComponentModel;
 
 namespace Reactive.Multi.Agent.MCP.Server.Tools;
 
@@ -19,8 +20,14 @@ namespace Reactive.Multi.Agent.MCP.Server.Tools;
 [McpServerToolType]
 public sealed class OrchestratorTools
 {
-    [McpServerTool(Name = "multiagent_orchestrate_request")]
-    public static string OrchestrateRequest(IOrchestrationService orchestrationService, string userRequest, string? constraints = null, string? desiredArtifacts = null, string? preferredAgents = null, int maxParallelAgents = 4)
+    [McpServerTool(Name = "multiagent_orchestrate_request"), Description("Create a new durable orchestration session from the user's top-level request. Call this before any specialist worker agent tool because worker tools require the returned sessionId and task ids.")]
+    public static string OrchestrateRequest(
+        IOrchestrationService orchestrationService,
+        [Description("The complete top-level user request to decompose into specialist agent tasks and execution waves.")] string userRequest,
+        [Description("Optional comma-separated constraints such as target framework, package restrictions, coding style, or deployment limits.")] string? constraints = null,
+        [Description("Optional comma-separated desired artifacts such as source files, tests, documentation, workflows, or migration plans.")] string? desiredArtifacts = null,
+        [Description("Optional comma-separated specialist agent ids to prefer during routing, such as csharp, blazor, docs, tester, or reviewer.")] string? preferredAgents = null,
+        [Description("Maximum number of specialist agents that may run concurrently within an execution wave.")] int maxParallelAgents = 4)
         => McpSafeExecutor.ExecuteJson("multiagent_orchestrate_request", () =>
         {
             ArgumentNullException.ThrowIfNull(orchestrationService);
