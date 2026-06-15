@@ -94,7 +94,7 @@ All session state is stored locally in SQLite — no external services or API ke
 
 When this server is active, agents should follow the **Reactive Multi Agent Protocol**:
 
-1. Call `multiagent_orchestrate_request` with the user's top-level request to create the session and get the full execution plan.
+1. Call `multiagent_orchestrate_request` with the user's top-level request to create the session and get the full execution plan. This is the required first write tool before any specialist worker agent call because worker tools require the returned `sessionId` and task ids.
 2. Inspect `session.plan.executionWaves` — work through waves in `phaseOrder` order.
 3. Within each wave, dispatch all tasks to their assigned specialist agent tools in parallel when the client supports parallel tool calls.
 4. Each specialist agent tool call returns an `AgentTaskPacket` with `agentName`, `agentSessionId`, `executionPrompt`, `lifecycleInstruction`, and `nextSteps`. Use `agentName` as the visible sub-agent name and keep `agentSessionId` as the correlation id.
@@ -148,6 +148,8 @@ Prompt failures return a safe fallback text response naming the failed operation
 
 #### `multiagent_orchestrate_request`
 Decomposes a user request into a full orchestration plan and creates a persisted session.
+
+This is the required session-creation tool. Call it before any `multiagent_*_agent` worker tool, then pass the returned `sessionId` and task `taskId` values into worker calls.
 
 **Parameters:**
 - `userRequest` — the top-level user request to decompose

@@ -10,17 +10,20 @@ Use this skill when the Reactive Multi Agent MCP server is available and the tas
 ## Core Workflow
 
 1. Discover specialists when needed with `multiagent_agent_catalog_list`, `multiagent_agent_catalog_search`, or `multiagent_agent_catalog_get`.
-2. Create a session with `multiagent_orchestrate_request`. Pass the user request, constraints, desired artifacts, preferred agents, and a sensible `maxParallelAgents`.
-3. Read `session.plan.executionWaves` and work through waves by ascending `phaseOrder`.
-4. Within one wave, dispatch ready independent tasks in parallel when the host supports parallel tool calls.
-5. For each task, call the assigned worker tool to get an `AgentTaskPacket`.
-6. Spawn or continue the sub-agent using `agentName` as the visible name and `agentSessionId` as the stable correlation id.
-7. Give the sub-agent the packet `executionPrompt`, `acceptanceCriteria`, `suggestedSkills`, `suggestedTools`, artifact schema hint, and current `nextSteps`.
-8. During long work, record progress with `multiagent_record_heartbeat`.
-9. When the sub-agent has output, call the same worker tool with `workSummary`, `artifacts`, `handoffItems`, `risks`, and `markComplete: true`.
-10. If the returned packet has `shutdownRequired: true`, close that named sub-agent immediately. Do not continue work in that agent context.
-11. Periodically call `multiagent_supervisor_plan` and `multiagent_get_maintenance_report`.
-12. When all required work is complete, call `multiagent_finalize_session` and use the unified response.
+2. Create a session with `multiagent_orchestrate_request`. This is the required first write tool before any worker tool. Pass the user request, constraints, desired artifacts, preferred agents, and a sensible `maxParallelAgents`.
+3. Capture the returned `sessionId`, `plan.tasks[*].taskId`, `plan.tasks[*].agentId`, and `plan.tasks[*].agentToolName`; every worker tool call requires the relevant `sessionId` and `taskId`.
+4. Read `session.plan.executionWaves` and work through waves by ascending `phaseOrder`.
+5. Within one wave, dispatch ready independent tasks in parallel when the host supports parallel tool calls.
+6. For each task, call the assigned worker tool to get an `AgentTaskPacket`.
+7. Spawn or continue the sub-agent using `agentName` as the visible name and `agentSessionId` as the stable correlation id.
+8. Give the sub-agent the packet `executionPrompt`, `acceptanceCriteria`, `suggestedSkills`, `suggestedTools`, artifact schema hint, and current `nextSteps`.
+9. During long work, record progress with `multiagent_record_heartbeat`.
+10. When the sub-agent has output, call the same worker tool with `workSummary`, `artifacts`, `handoffItems`, `risks`, and `markComplete: true`.
+11. If the returned packet has `shutdownRequired: true`, close that named sub-agent immediately. Do not continue work in that agent context.
+12. Periodically call `multiagent_supervisor_plan` and `multiagent_get_maintenance_report`.
+13. When all required work is complete, call `multiagent_finalize_session` and use the unified response.
+
+If a worker tool is available but no orchestration session exists yet, do not invent a `sessionId`. Call `multiagent_orchestrate_request` first, then use the returned task metadata to call the worker tool.
 
 ## Agent Lifecycle Rules
 
