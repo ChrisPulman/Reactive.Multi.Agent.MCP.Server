@@ -17,6 +17,14 @@ namespace Reactive.Multi.Agent.MCP.Server.Resources;
 [McpServerResourceType]
 public sealed class OrchestrationResources
 {
+    private static readonly string[] ControlPlaneComponents =
+    [
+        "execution ledger",
+        "supervisor action lifecycle tracking",
+        "orchestration-level resume state",
+        "task-level checkpoint/retry/resume continuity",
+    ];
+
     [McpServerResource(UriTemplate = "multiagent://catalog", Name = "Multi-Agent Catalog", MimeType = "application/json")]
     [Description("Read-only catalog of specialist multi-agent worker profiles.")]
     public static string GetCatalog(IAgentCatalog agentCatalog)
@@ -94,13 +102,7 @@ public sealed class OrchestrationResources
         => McpSafeExecutor.ExecuteJson("resource:multiagent://architecture/hub-and-spoke", () => new
         {
             model = "hub-and-spoke",
-            controlPlane = new[]
-            {
-                "execution ledger",
-                "supervisor action lifecycle tracking",
-                "orchestration-level resume state",
-                "task-level checkpoint/retry/resume continuity",
-            },
+            controlPlane = ControlPlaneComponents,
         });
 
     [McpServerResource(UriTemplate = "multiagent://schemas/artifacts", Name = "Structured Artifact Schema", MimeType = "application/json")]

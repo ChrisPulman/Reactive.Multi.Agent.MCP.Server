@@ -10,8 +10,8 @@ public class DecompositionTests
     [Test]
     public async Task Decomposer_Assigns_Blazor_Ci_And_Migration_For_Mixed_Request()
     {
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
 
         var plan = decomposer.CreatePlan(OrchestrationRequest.FromStrings(
             "Build a Blazor app, generate a CI pipeline, and produce a migration plan."));

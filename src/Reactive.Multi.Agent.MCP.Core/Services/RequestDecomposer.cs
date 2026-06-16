@@ -27,7 +27,7 @@ public sealed class RequestDecomposer(IAgentCatalog agentCatalog) : IRequestDeco
         {
             var clause = clauses[index];
             var profile = SelectProfile(clause, request.PreferredAgents);
-            var phase = DeterminePhase(profile);
+            var (phaseName, phaseOrder) = DeterminePhase(profile);
             var taskId = $"task-{index + 1}";
 
             tasks.Add(new AgentWorkItem
@@ -40,8 +40,8 @@ public sealed class RequestDecomposer(IAgentCatalog agentCatalog) : IRequestDeco
                 Title = BuildTitle(profile, clause),
                 Objective = clause,
                 ContextSnapshot = BuildContextSnapshot(request, clause, profile),
-                PhaseName = phase.Name,
-                PhaseOrder = phase.Order,
+                PhaseName = phaseName,
+                PhaseOrder = phaseOrder,
                 SequenceOrder = index + 1,
                 AcceptanceCriteria = BuildAcceptanceCriteria(profile, clause, request),
                 SuggestedSkills = profile.DefaultSkills,
@@ -59,7 +59,7 @@ public sealed class RequestDecomposer(IAgentCatalog agentCatalog) : IRequestDeco
             {
                 PhaseOrder = group.Key.PhaseOrder,
                 PhaseName = group.Key.PhaseName,
-                TaskIds = group.OrderBy(task => task.SequenceOrder).Select(task => task.TaskId).ToArray(),
+                TaskIds = [.. group.OrderBy(task => task.SequenceOrder).Select(task => task.TaskId)],
             })
             .ToArray();
 
@@ -75,11 +75,11 @@ public sealed class RequestDecomposer(IAgentCatalog agentCatalog) : IRequestDeco
                 "Record structured artifacts and handoff items through the specialist agent tools before finalizing the session.",
             ],
             ExecutionWaves = executionWaves,
-            Tasks = tasks.OrderBy(task => task.PhaseOrder).ThenBy(task => task.SequenceOrder).ToArray(),
+            Tasks = [.. tasks.OrderBy(task => task.PhaseOrder).ThenBy(task => task.SequenceOrder)],
         };
     }
 
-    private static IReadOnlyList<string> SplitClauses(string request)
+    private static List<string> SplitClauses(string request)
     {
         var normalized = request
             .Replace("\r", " ", StringComparison.Ordinal)
@@ -181,14 +181,15 @@ public sealed class RequestDecomposer(IAgentCatalog agentCatalog) : IRequestDeco
 
             foreach (var task in currentWave)
             {
-                task.Dependencies = previousWave
-                    .Select(previous => new TaskDependency
+                task.Dependencies =
+                [
+                    .. previousWave.Select(previous => new TaskDependency
                     {
                         TaskId = previous.TaskId,
                         Kind = DependencyKind.Blocking,
                         Reason = $"{task.PhaseName} work follows completion of the {previous.PhaseName} wave.",
-                    })
-                    .ToArray();
+                    }),
+                ];
             }
         }
     }
@@ -221,7 +222,7 @@ public sealed class RequestDecomposer(IAgentCatalog agentCatalog) : IRequestDeco
         return builder.ToString().Trim();
     }
 
-    private static IReadOnlyList<string> BuildAcceptanceCriteria(AgentProfile profile, string clause, OrchestrationRequest request)
+    private static List<string> BuildAcceptanceCriteria(AgentProfile profile, string clause, OrchestrationRequest request)
     {
         var criteria = new List<string>
         {
@@ -243,6 +244,6 @@ public sealed class RequestDecomposer(IAgentCatalog agentCatalog) : IRequestDeco
         return criteria;
     }
 
-    private static string BuildPlanSummary(OrchestrationRequest request, IReadOnlyList<AgentWorkItem> tasks)
+    private static string BuildPlanSummary(OrchestrationRequest request, List<AgentWorkItem> tasks)
         => $"Decomposed '{request.UserRequest}' into {tasks.Count} task(s) across {tasks.Select(task => task.AgentId).Distinct(StringComparer.OrdinalIgnoreCase).Count()} specialist agent type(s) with dependency-aware execution waves.";
 }

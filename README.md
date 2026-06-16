@@ -94,7 +94,9 @@ All session state is stored locally in SQLite — no external services or API ke
 
 When this server is active, agents should follow the **Reactive Multi Agent Protocol**:
 
-1. Call `multiagent_orchestrate_request` with the user's top-level request to create the session and get the full execution plan. This is the required first write tool before any specialist worker agent call because worker tools require the returned `sessionId` and task ids.
+The orchestration/control-plane agent should use GPT-5.5 or an equivalent highest-capacity model so it can hold the complete request, dependency graph, session state, specialist outputs, and final synthesis context. Smaller specialist agents may be used only for bounded worker tasks after the orchestration session has been created.
+
+1. Call `multiagent_orchestrate_request` with the user's top-level request to create the session and get the full execution plan. If the MCP host discovers tools by creation semantics, call the explicit alias `multiagent_create_session`; both tools create the same durable session payload. This is the required first write tool before any specialist worker agent call because worker tools require the returned `sessionId` and task ids.
 2. Inspect `session.plan.executionWaves` — work through waves in `phaseOrder` order.
 3. Within each wave, dispatch all tasks to their assigned specialist agent tools in parallel when the client supports parallel tool calls.
 4. Each specialist agent tool call returns an `AgentTaskPacket` with `agentName`, `agentSessionId`, `executionPrompt`, `lifecycleInstruction`, and `nextSteps`. Use `agentName` as the visible sub-agent name and keep `agentSessionId` as the correlation id.
@@ -149,7 +151,7 @@ Prompt failures return a safe fallback text response naming the failed operation
 #### `multiagent_orchestrate_request`
 Decomposes a user request into a full orchestration plan and creates a persisted session.
 
-This is the required session-creation tool. Call it before any `multiagent_*_agent` worker tool, then pass the returned `sessionId` and task `taskId` values into worker calls.
+This is the required session-creation tool. Call it before any `multiagent_*_agent` worker tool, then pass the returned `sessionId` and task `taskId` values into worker calls. The returned startup payload includes the `orchestratorModelRequirement` field, which instructs clients to keep orchestration/control-plane context on GPT-5.5 or an equivalent highest-capacity model.
 
 **Parameters:**
 - `userRequest` — the top-level user request to decompose
@@ -161,6 +163,17 @@ This is the required session-creation tool. Call it before any `multiagent_*_age
 Returns: the created `OrchestrationSession` and an `OrchestrationSummary` with task status, ready tasks, and blocked tasks.
 
 **When to use:** Call this once per user request at the start of every multi-agent workflow. The returned `sessionId` is required by all subsequent tool calls.
+
+---
+
+#### `multiagent_create_session`
+Explicit session-creation alias for `multiagent_orchestrate_request`.
+
+Some MCP clients rank or filter tools by direct creation terms. This alias prevents those clients from seeing only specialist worker tools and assuming no orchestration endpoint exists. It accepts the same parameters and returns the same startup payload as `multiagent_orchestrate_request`.
+
+**Parameters:** Same as `multiagent_orchestrate_request`.
+
+**When to use:** Use this at the start of a workflow when the host asks for a create-session style tool, or when `multiagent_orchestrate_request` is not surfaced by the client's tool search. Do not call worker tools until either `multiagent_orchestrate_request` or `multiagent_create_session` has returned a `sessionId` and task ids.
 
 ---
 

@@ -8,7 +8,7 @@ public class CatalogLoadingTests
     [Test]
     public async Task EmbeddedCatalog_Loads_All_Domain_Specialist_Agents()
     {
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
+        EmbeddedAgentCatalog catalog = new();
 
         await Assert.That(catalog.GetAll().Count).IsGreaterThanOrEqualTo(15);
         await Assert.That(catalog.GetById("reactiveui")).IsNotNull();
@@ -18,7 +18,7 @@ public class CatalogLoadingTests
     [Test]
     public async Task EmbeddedCatalog_Search_Returns_Category_Then_DisplayName_Sorted_Projection()
     {
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
+        EmbeddedAgentCatalog catalog = new();
 
         var results = catalog.Search("agent");
 

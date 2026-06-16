@@ -32,23 +32,25 @@ public sealed class EmbeddedAgentCatalog : IAgentCatalog
             return GetAll();
         }
 
-        return Profiles.Value
-            .Where(profile =>
-                profile.Id.Contains(query, StringComparison.OrdinalIgnoreCase)
-                || profile.Domain.Contains(query, StringComparison.OrdinalIgnoreCase)
-                || profile.Category.Contains(query, StringComparison.OrdinalIgnoreCase)
-                || profile.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase)
-                || profile.Summary.Contains(query, StringComparison.OrdinalIgnoreCase)
-                || profile.Role.Contains(query, StringComparison.OrdinalIgnoreCase)
-                || profile.DefaultSkills.Any(skill => skill.Contains(query, StringComparison.OrdinalIgnoreCase))
-                || profile.DefaultTools.Any(tool => tool.Contains(query, StringComparison.OrdinalIgnoreCase))
-                || profile.RoutingKeywords.Any(keyword => keyword.Contains(query, StringComparison.OrdinalIgnoreCase)))
-            .OrderBy(profile => profile.Category, StringComparer.OrdinalIgnoreCase)
-            .ThenBy(profile => profile.DisplayName, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
+        return
+        [
+            .. Profiles.Value
+                .Where(profile =>
+                    profile.Id.Contains(query, StringComparison.OrdinalIgnoreCase)
+                    || profile.Domain.Contains(query, StringComparison.OrdinalIgnoreCase)
+                    || profile.Category.Contains(query, StringComparison.OrdinalIgnoreCase)
+                    || profile.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase)
+                    || profile.Summary.Contains(query, StringComparison.OrdinalIgnoreCase)
+                    || profile.Role.Contains(query, StringComparison.OrdinalIgnoreCase)
+                    || profile.DefaultSkills.Any(skill => skill.Contains(query, StringComparison.OrdinalIgnoreCase))
+                    || profile.DefaultTools.Any(tool => tool.Contains(query, StringComparison.OrdinalIgnoreCase))
+                    || profile.RoutingKeywords.Any(keyword => keyword.Contains(query, StringComparison.OrdinalIgnoreCase)))
+                .OrderBy(profile => profile.Category, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(profile => profile.DisplayName, StringComparer.OrdinalIgnoreCase),
+        ];
     }
 
-    private static IReadOnlyList<AgentProfile> LoadProfiles()
+    private static List<AgentProfile> LoadProfiles()
     {
         var assembly = Assembly.GetExecutingAssembly();
         var resourceNames = assembly.GetManifestResourceNames()

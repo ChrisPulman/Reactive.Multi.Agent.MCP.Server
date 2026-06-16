@@ -57,9 +57,9 @@ public class CopilotCrashHardeningTests
     {
         var options = CreateOptions("reactive-multi-agent-mcp-safe-error-tests");
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
 
         var toolJson = OrchestratorTools.SessionStatus(orchestration, "missing-session");
         using var toolDocument = JsonDocument.Parse(toolJson);
@@ -81,9 +81,9 @@ public class CopilotCrashHardeningTests
     {
         var options = CreateOptions("reactive-multi-agent-mcp-safe-prompt-tests");
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
 
         var prompt = OrchestrationPrompts.CreateSpecialistAgentPrompt(orchestration, "missing-session", "missing-task", "csharp");
 
@@ -97,9 +97,9 @@ public class CopilotCrashHardeningTests
     {
         var options = CreateOptions("reactive-multi-agent-mcp-compacted-resource-tests");
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
 
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings(
             "Build a Blazor app with CI, docs, tests, and an MCP integration layer",

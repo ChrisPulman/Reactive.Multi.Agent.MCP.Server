@@ -33,11 +33,12 @@ public sealed class OrchestrationPrompts
 
             var builder = new StringBuilder();
             builder.AppendLine("Use the Reactive Multi Agent MCP Server as follows:");
-            builder.AppendLine("1. Call multiagent_orchestrate_request with the full user request.");
-            builder.AppendLine("2. Work through execution waves in order.");
-            builder.AppendLine("3. Run independent tasks in the same wave in parallel when possible.");
-            builder.AppendLine("4. Record structured artifacts, risks, and handoff items with the specialist agent tools.");
-            builder.AppendLine("5. Call multiagent_finalize_session to merge the final answer.");
+            builder.AppendLine("1. Run orchestration/control-plane work with GPT-5.5 or an equivalent highest-capacity model.");
+            builder.AppendLine("2. Call multiagent_orchestrate_request with the full user request; use multiagent_create_session as the explicit session-creation alias when host discovery prefers create/session tools.");
+            builder.AppendLine("3. Work through execution waves in order.");
+            builder.AppendLine("4. Run independent tasks in the same wave in parallel when possible.");
+            builder.AppendLine("5. Record structured artifacts, risks, and handoff items with the specialist agent tools.");
+            builder.AppendLine("6. Call multiagent_finalize_session to merge the final answer.");
             builder.AppendLine();
             foreach (var wave in plan.ExecutionWaves.OrderBy(wave => wave.PhaseOrder))
             {

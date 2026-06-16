@@ -12,6 +12,27 @@ namespace Reactive.Multi.Agent.MCP.Tests;
 public class OrchestratorToolsCoverageTests
 {
     [Test]
+    public async Task CreateSession_Alias_Tool_Returns_Startup_Payload_With_Model_Guidance()
+    {
+        var options = CreateOptions("orchestrator-create-session-alias");
+        using var store = new SqliteOrchestrationSessionStore(options);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
+
+        var json = OrchestratorTools.CreateSession(orchestration, "Build a Blazor app");
+
+        using var document = JsonDocument.Parse(json);
+        var root = document.RootElement;
+        await Assert.That(root.TryGetProperty("ok", out _)).IsFalse();
+        await Assert.That(root.TryGetProperty("sessionId", out _)).IsTrue();
+        await Assert.That(root.TryGetProperty("sessionCreationTools", out var sessionCreationTools)).IsTrue();
+        await Assert.That(sessionCreationTools.EnumerateArray().Select(tool => tool.GetString()).ToArray()).Contains("multiagent_create_session");
+        await Assert.That(root.TryGetProperty("orchestratorModelRequirement", out var modelRequirement)).IsTrue();
+        await Assert.That(modelRequirement.GetString()).Contains("GPT-5.5");
+    }
+
+    [Test]
     public async Task FinalizeSession_Tool_Returns_Summary_Fields()
     {
         var (orchestration, session) = CreateSession("orchestrator-finalize");
@@ -45,9 +66,9 @@ public class OrchestratorToolsCoverageTests
     {
         var options = CreateOptions("orchestrator-resume-task");
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         var task = session.Plan.Tasks.Single();
 
@@ -86,9 +107,9 @@ public class OrchestratorToolsCoverageTests
     {
         var options = CreateOptions("orchestrator-update-action");
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         var plan = orchestration.GetSupervisorActionPlan(session.SessionId);
         var actionId = plan.ActionIds[0];
@@ -191,9 +212,9 @@ public class OrchestratorToolsCoverageTests
     {
         var options = CreateOptions("orchestrator-auto-policy");
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         var task = session.Plan.Tasks.Single();
 
@@ -263,13 +284,13 @@ public class OrchestratorToolsCoverageTests
         await Assert.That(root.TryGetProperty("nextRunnableTasks", out _)).IsTrue();
     }
 
-    private static (IOrchestrationService orchestration, OrchestrationSession session) CreateSession(string folderPrefix)
+    private static (OrchestrationService orchestration, OrchestrationSession session) CreateSession(string folderPrefix)
     {
         var options = CreateOptions(folderPrefix);
         var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         return (orchestration, session);
     }

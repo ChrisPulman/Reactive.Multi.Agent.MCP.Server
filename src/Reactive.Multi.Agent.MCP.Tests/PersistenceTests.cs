@@ -17,13 +17,13 @@ public class PersistenceTests
             StateRootPath = Path.Combine(Path.GetTempPath(), "reactive-multi-agent-mcp-tests", Guid.NewGuid().ToString("N")),
         };
 
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
         string sessionId;
 
         using (var store = new SqliteOrchestrationSessionStore(options))
         {
-            IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+            OrchestrationService orchestration = new(decomposer, catalog, store);
             var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
             var task = session.Plan.Tasks.Single();
 
@@ -51,7 +51,7 @@ public class PersistenceTests
 
         using (var reopenedStore = new SqliteOrchestrationSessionStore(options))
         {
-            IOrchestrationService reopened = new OrchestrationService(decomposer, catalog, reopenedStore);
+            OrchestrationService reopened = new(decomposer, catalog, reopenedStore);
             var reloaded = reopened.GetSession(sessionId);
 
             await Assert.That(reloaded).IsNotNull();

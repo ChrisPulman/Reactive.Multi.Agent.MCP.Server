@@ -16,9 +16,9 @@ public class SupervisorAndHistoryTests
     {
         var options = new ReactiveMultiAgentOptions { StateRootPath = Path.Combine(Path.GetTempPath(), "reactive-multi-agent-mcp-history-tests", Guid.NewGuid().ToString("N")) };
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app with CI pipeline"));
         var results = orchestration.SearchSessions("Blazor", 10);
         await Assert.That(results.Count).IsGreaterThanOrEqualTo(1);
@@ -30,9 +30,9 @@ public class SupervisorAndHistoryTests
     {
         var options = new ReactiveMultiAgentOptions { StateRootPath = Path.Combine(Path.GetTempPath(), "reactive-multi-agent-mcp-supervisor-tests", Guid.NewGuid().ToString("N")) };
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         var task = session.Plan.Tasks.Single();
         _ = orchestration.ReportTaskFailure(session.SessionId, task.TaskId, task.AgentId, AgentFailureKind.ContextWindowLimit, "Context too large.");
@@ -50,9 +50,9 @@ public class SupervisorAndHistoryTests
     {
         var options = new ReactiveMultiAgentOptions { StateRootPath = Path.Combine(Path.GetTempPath(), "reactive-multi-agent-mcp-next-task-tests", Guid.NewGuid().ToString("N")) };
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         var plan = orchestration.GetSupervisorActionPlan(session.SessionId);
         await Assert.That(plan.NextRunnableTasks.Count).IsGreaterThanOrEqualTo(1);
@@ -65,9 +65,9 @@ public class SupervisorAndHistoryTests
     {
         var options = new ReactiveMultiAgentOptions { StateRootPath = Path.Combine(Path.GetTempPath(), "reactive-multi-agent-mcp-auto-plan-tests", Guid.NewGuid().ToString("N")) };
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         var task = session.Plan.Tasks.Single();
         _ = orchestration.ApplyAutomaticPolicy(session.SessionId, task.TaskId, task.AgentId, currentEstimatedTokens: 9500);
@@ -81,9 +81,9 @@ public class SupervisorAndHistoryTests
     {
         var options = new ReactiveMultiAgentOptions { StateRootPath = Path.Combine(Path.GetTempPath(), "reactive-multi-agent-mcp-ledger-tests", Guid.NewGuid().ToString("N")) };
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         _ = orchestration.GetSupervisorActionPlan(session.SessionId, autoApplyPolicies: false);
         var resumed = orchestration.ResumeOrchestration(session.SessionId);
@@ -96,9 +96,9 @@ public class SupervisorAndHistoryTests
     {
         var options = new ReactiveMultiAgentOptions { StateRootPath = Path.Combine(Path.GetTempPath(), "reactive-multi-agent-mcp-action-lifecycle-tests", Guid.NewGuid().ToString("N")) };
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         var plan = orchestration.GetSupervisorActionPlan(session.SessionId);
         var actionId = plan.ActionIds[0];
@@ -113,9 +113,9 @@ public class SupervisorAndHistoryTests
     {
         var options = new ReactiveMultiAgentOptions { StateRootPath = Path.Combine(Path.GetTempPath(), "reactive-multi-agent-mcp-auto-close-tests", Guid.NewGuid().ToString("N")) };
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         var task = session.Plan.Tasks.Single();
         _ = orchestration.GetSupervisorActionPlan(session.SessionId);
@@ -130,9 +130,9 @@ public class SupervisorAndHistoryTests
     {
         var options = new ReactiveMultiAgentOptions { StateRootPath = Path.Combine(Path.GetTempPath(), "reactive-multi-agent-mcp-escalation-tests", Guid.NewGuid().ToString("N")) };
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         _ = orchestration.GetSupervisorActionPlan(session.SessionId);
         var reloaded = orchestration.GetSession(session.SessionId)!;
@@ -150,9 +150,9 @@ public class SupervisorAndHistoryTests
     {
         var options = new ReactiveMultiAgentOptions { StateRootPath = Path.Combine(Path.GetTempPath(), "reactive-multi-agent-mcp-heartbeat-tests", Guid.NewGuid().ToString("N")) };
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         var task = session.Plan.Tasks.Single();
         var plan = orchestration.GetSupervisorActionPlan(session.SessionId);
@@ -168,9 +168,9 @@ public class SupervisorAndHistoryTests
     {
         var options = new ReactiveMultiAgentOptions { StateRootPath = Path.Combine(Path.GetTempPath(), "reactive-multi-agent-mcp-maintenance-tests", Guid.NewGuid().ToString("N")) };
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         var reloaded = orchestration.GetSession(session.SessionId)!;
         reloaded.LastHeartbeatUtc = DateTimeOffset.UtcNow.AddMinutes(-60);
@@ -188,9 +188,9 @@ public class SupervisorAndHistoryTests
     {
         var options = new ReactiveMultiAgentOptions { StateRootPath = Path.Combine(Path.GetTempPath(), "reactive-multi-agent-mcp-report-tests", Guid.NewGuid().ToString("N")) };
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         var reloaded = orchestration.GetSession(session.SessionId)!;
         reloaded.LastHeartbeatUtc = DateTimeOffset.UtcNow.AddMinutes(-60);
@@ -198,7 +198,7 @@ public class SupervisorAndHistoryTests
         store.Save(reloaded);
         var report = orchestration.GetMaintenanceReport(session.SessionId, silentHeartbeatMinutes: 15);
         await Assert.That(string.IsNullOrWhiteSpace(report.CronSummary)).IsFalse();
-        await Assert.That(report.Verdict == "warning" || report.Verdict == "critical").IsTrue();
+        await Assert.That(report.Verdict is "warning" or "critical").IsTrue();
         await Assert.That(report.HeartbeatIssues.Count).IsGreaterThanOrEqualTo(1);
     }
 
@@ -207,9 +207,9 @@ public class SupervisorAndHistoryTests
     {
         var options = new ReactiveMultiAgentOptions { StateRootPath = Path.Combine(Path.GetTempPath(), "reactive-multi-agent-mcp-report-autoapply-tests", Guid.NewGuid().ToString("N")) };
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         var task = session.Plan.Tasks.Single();
         _ = orchestration.ApplyAutomaticPolicy(session.SessionId, task.TaskId, task.AgentId, currentEstimatedTokens: 9500);
@@ -224,9 +224,9 @@ public class SupervisorAndHistoryTests
     {
         var options = new ReactiveMultiAgentOptions { StateRootPath = Path.Combine(Path.GetTempPath(), "reactive-multi-agent-mcp-history-trend-tests", Guid.NewGuid().ToString("N")) };
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         _ = orchestration.GetMaintenanceReport(session.SessionId);
         var reloaded = orchestration.GetSession(session.SessionId)!;
@@ -237,7 +237,7 @@ public class SupervisorAndHistoryTests
         var history = orchestration.GetMaintenanceHistory(session.SessionId, 10);
         await Assert.That(history.Count).IsGreaterThanOrEqualTo(2);
         await Assert.That(second.RecentHistory.Count).IsGreaterThanOrEqualTo(2);
-        await Assert.That(second.Trend == MaintenanceTrend.Worsening || second.Trend == MaintenanceTrend.Stable).IsTrue();
+        await Assert.That(second.Trend is MaintenanceTrend.Worsening or MaintenanceTrend.Stable).IsTrue();
         await Assert.That(string.IsNullOrWhiteSpace(second.TrendSummary)).IsFalse();
     }
 
@@ -246,9 +246,9 @@ public class SupervisorAndHistoryTests
     {
         var options = new ReactiveMultiAgentOptions { StateRootPath = Path.Combine(Path.GetTempPath(), "reactive-multi-agent-mcp-history-order-tests", Guid.NewGuid().ToString("N")) };
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         _ = orchestration.GetMaintenanceReport(session.SessionId);
         _ = orchestration.GetMaintenanceReport(session.SessionId);
@@ -263,9 +263,9 @@ public class SupervisorAndHistoryTests
     {
         var options = new ReactiveMultiAgentOptions { StateRootPath = Path.Combine(Path.GetTempPath(), "reactive-multi-agent-mcp-compact-payload-tests", Guid.NewGuid().ToString("N")) };
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
 
         var json = OrchestratorTools.OrchestrateRequest(
             orchestration,
