@@ -22,7 +22,7 @@ public class McpServerIntegrationTests
         var transport = new StdioClientTransport(new StdioClientTransportOptions
         {
             Command = "dotnet",
-            Arguments = new List<string> { "run", "--no-build", "--configuration", configuration, "--project", serverCsproj },
+            Arguments = ["run", "--no-build", "--configuration", configuration, "--project", serverCsproj],
             EnvironmentVariables = new Dictionary<string, string?>
             {
                 ["REACTIVE_MULTI_AGENT_MCP_STATE_ROOT"] = stateDir,
@@ -42,11 +42,11 @@ public class McpServerIntegrationTests
 
     [Test]
     [Timeout(30_000)]
-    public async Task Server_Lists_33_Registered_Tools(CancellationToken cancellationToken)
+    public async Task Server_Lists_34_Registered_Tools(CancellationToken cancellationToken)
     {
         var tools = await _client.ListToolsAsync(cancellationToken: cancellationToken);
 
-        await Assert.That(tools.Count).IsEqualTo(33);
+        await Assert.That(tools.Count).IsEqualTo(34);
     }
 
     [Test]
@@ -57,6 +57,7 @@ public class McpServerIntegrationTests
         var names = tools.Select(t => t.Name).ToHashSet();
 
         await Assert.That(names).Contains("multiagent_orchestrate_request");
+        await Assert.That(names).Contains("multiagent_create_session");
         await Assert.That(names).Contains("multiagent_csharp_agent");
         await Assert.That(names).Contains("multiagent_blazor_agent");
         await Assert.That(names).Contains("multiagent_agent_catalog_list");
@@ -73,6 +74,18 @@ public class McpServerIntegrationTests
 
         await Assert.That(tool.Description).Contains("Create a new durable orchestration session");
         await Assert.That(tool.Description).Contains("Call this before any specialist worker agent tool");
+    }
+
+    [Test]
+    [Timeout(30_000)]
+    public async Task CreateSession_Alias_Tool_Is_Discoverable_With_Required_First_Call_Description(CancellationToken cancellationToken)
+    {
+        var tools = await _client.ListToolsAsync(cancellationToken: cancellationToken);
+        var tool = tools.Single(candidate => candidate.Name == "multiagent_create_session");
+
+        await Assert.That(tool.Description).Contains("Create a durable orchestration session");
+        await Assert.That(tool.Description).Contains("explicit alias for multiagent_orchestrate_request");
+        await Assert.That(tool.Description).Contains("required first write tool");
     }
 
     [Test]
@@ -129,6 +142,31 @@ public class McpServerIntegrationTests
         using var doc = JsonDocument.Parse(text);
         var root = doc.RootElement;
         await Assert.That(root.TryGetProperty("sessionId", out _)).IsTrue();
+        await Assert.That(root.TryGetProperty("sessionCreationTools", out var sessionCreationTools)).IsTrue();
+        await Assert.That(sessionCreationTools.EnumerateArray().Select(tool => tool.GetString()).ToArray()).Contains("multiagent_create_session");
+        await Assert.That(root.TryGetProperty("orchestratorModelRequirement", out var modelRequirement)).IsTrue();
+        await Assert.That(modelRequirement.GetString()).Contains("GPT-5.5");
+        await Assert.That(root.TryGetProperty("progress", out var progress)).IsTrue();
+        await Assert.That(progress.TryGetProperty("status", out _)).IsTrue();
+        await Assert.That(progress.TryGetProperty("totalTasks", out _)).IsTrue();
+    }
+
+    [Test]
+    [Timeout(30_000)]
+    public async Task CreateSession_Alias_Tool_Returns_Session_Payload(CancellationToken cancellationToken)
+    {
+        var result = await _client.CallToolAsync(
+            "multiagent_create_session",
+            new Dictionary<string, object?> { ["userRequest"] = "Build a C# console app" },
+            cancellationToken: cancellationToken);
+
+        await Assert.That(result.IsError ?? false).IsFalse();
+        var text = ((TextContentBlock)result.Content[0]).Text;
+        using var doc = JsonDocument.Parse(text);
+        var root = doc.RootElement;
+        await Assert.That(root.TryGetProperty("sessionId", out _)).IsTrue();
+        await Assert.That(root.TryGetProperty("sessionCreationTools", out var sessionCreationTools)).IsTrue();
+        await Assert.That(sessionCreationTools.EnumerateArray().Select(tool => tool.GetString()).ToArray()).Contains("multiagent_create_session");
         await Assert.That(root.TryGetProperty("progress", out var progress)).IsTrue();
         await Assert.That(progress.TryGetProperty("status", out _)).IsTrue();
         await Assert.That(progress.TryGetProperty("totalTasks", out _)).IsTrue();
@@ -175,7 +213,7 @@ public class McpServerIntegrationTests
     public async Task Catalog_Resource_Read_Returns_Agents_Json(CancellationToken cancellationToken)
     {
         var result = await _client.ReadResourceAsync(
-            "multiagent://catalog",
+            new Uri("multiagent://catalog"),
             cancellationToken: cancellationToken);
 
         await Assert.That(result.Contents.Count).IsGreaterThan(0);
@@ -191,7 +229,7 @@ public class McpServerIntegrationTests
     public async Task RecentHistory_Resource_Read_Returns_Json_Array(CancellationToken cancellationToken)
     {
         var result = await _client.ReadResourceAsync(
-            "multiagent://history/recent",
+            new Uri("multiagent://history/recent"),
             cancellationToken: cancellationToken);
 
         await Assert.That(result.Contents.Count).IsGreaterThan(0);
@@ -205,7 +243,7 @@ public class McpServerIntegrationTests
     public async Task Architecture_Resource_Read_Returns_Hub_And_Spoke_Model(CancellationToken cancellationToken)
     {
         var result = await _client.ReadResourceAsync(
-            "multiagent://architecture/hub-and-spoke",
+            new Uri("multiagent://architecture/hub-and-spoke"),
             cancellationToken: cancellationToken);
 
         await Assert.That(result.Contents.Count).IsGreaterThan(0);
@@ -221,7 +259,7 @@ public class McpServerIntegrationTests
     public async Task ArtifactSchema_Resource_Read_Returns_Example_Schema(CancellationToken cancellationToken)
     {
         var result = await _client.ReadResourceAsync(
-            "multiagent://schemas/artifacts",
+            new Uri("multiagent://schemas/artifacts"),
             cancellationToken: cancellationToken);
 
         await Assert.That(result.Contents.Count).IsGreaterThan(0);
@@ -244,6 +282,8 @@ public class McpServerIntegrationTests
         await Assert.That(result.Messages.Count).IsGreaterThan(0);
         var messageText = ((TextContentBlock)result.Messages[0].Content).Text;
         await Assert.That(messageText).Contains("multiagent_orchestrate_request");
+        await Assert.That(messageText).Contains("multiagent_create_session");
+        await Assert.That(messageText).Contains("GPT-5.5");
         await Assert.That(messageText).Contains("Phase");
     }
 

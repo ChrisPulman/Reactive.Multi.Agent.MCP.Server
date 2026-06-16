@@ -257,7 +257,7 @@ public class BlankParameterValidationTests
     [Test]
     public async Task GetAgent_With_Blank_Id_Returns_Safe_Error_With_Parameter_Name()
     {
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
+        EmbeddedAgentCatalog catalog = new();
 
         var json = AgentCatalogTools.GetAgent(catalog, "");
 
@@ -267,7 +267,7 @@ public class BlankParameterValidationTests
     [Test]
     public async Task GetAgent_With_Whitespace_Id_Returns_Safe_Error_With_Parameter_Name()
     {
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
+        EmbeddedAgentCatalog catalog = new();
 
         var json = AgentCatalogTools.GetAgent(catalog, "   ");
 
@@ -286,13 +286,13 @@ public class BlankParameterValidationTests
         return !ok && message.Contains(paramName, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static (IOrchestrationService orchestration, OrchestrationSession session) CreateSession(string folderPrefix)
+    private static (OrchestrationService orchestration, OrchestrationSession session) CreateSession(string folderPrefix)
     {
         var options = CreateOptions(folderPrefix);
         var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         return (orchestration, session);
     }

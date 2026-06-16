@@ -10,8 +10,8 @@ public class DependencyGraphTests
     [Test]
     public async Task Plan_Produces_Dependency_Aware_Execution_Waves()
     {
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
 
         var plan = decomposer.CreatePlan(OrchestrationRequest.FromStrings(
             "Create a migration plan, build a Blazor app, generate a CI pipeline, write docs, and run a review."));

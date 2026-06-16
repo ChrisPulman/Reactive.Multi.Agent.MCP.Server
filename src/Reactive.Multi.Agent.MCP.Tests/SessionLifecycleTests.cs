@@ -18,9 +18,9 @@ public class SessionLifecycleTests
 
         using (var store = new SqliteOrchestrationSessionStore(options))
         {
-            IAgentCatalog catalog = new EmbeddedAgentCatalog();
-            IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-            IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+            EmbeddedAgentCatalog catalog = new();
+            RequestDecomposer decomposer = new(catalog);
+            OrchestrationService orchestration = new(decomposer, catalog, store);
 
             var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
             task = session.Plan.Tasks.Single();
@@ -42,9 +42,9 @@ public class SessionLifecycleTests
 
         using (var store = new SqliteOrchestrationSessionStore(options))
         {
-            IAgentCatalog catalog = new EmbeddedAgentCatalog();
-            IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-            IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+            EmbeddedAgentCatalog catalog = new();
+            RequestDecomposer decomposer = new(catalog);
+            OrchestrationService orchestration = new(decomposer, catalog, store);
 
             var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
             var task = session.Plan.Tasks.Single();
@@ -67,9 +67,9 @@ public class SessionLifecycleTests
 
         using (var store = new SqliteOrchestrationSessionStore(options))
         {
-            IAgentCatalog catalog = new EmbeddedAgentCatalog();
-            IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-            IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+            EmbeddedAgentCatalog catalog = new();
+            RequestDecomposer decomposer = new(catalog);
+            OrchestrationService orchestration = new(decomposer, catalog, store);
 
             var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
             var task = session.Plan.Tasks.Single();
@@ -101,9 +101,9 @@ public class SessionLifecycleTests
 
         using (var store = new SqliteOrchestrationSessionStore(options))
         {
-            IAgentCatalog catalog = new EmbeddedAgentCatalog();
-            IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-            IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+            EmbeddedAgentCatalog catalog = new();
+            RequestDecomposer decomposer = new(catalog);
+            OrchestrationService orchestration = new(decomposer, catalog, store);
 
             var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Write documentation guide"));
             var task = session.Plan.Tasks.Single();

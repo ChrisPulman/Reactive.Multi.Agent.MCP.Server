@@ -410,13 +410,13 @@ public class HighCoverageBehaviorTests
         };
 
         var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         return new TestFixture(store, orchestration);
     }
 
-    private sealed record TestFixture(SqliteOrchestrationSessionStore Store, IOrchestrationService Orchestration);
+    private sealed record TestFixture(SqliteOrchestrationSessionStore Store, OrchestrationService Orchestration);
 
     private sealed class StaticAgentCatalog(IReadOnlyList<AgentProfile> profiles) : IAgentCatalog
     {
@@ -428,6 +428,6 @@ public class HighCoverageBehaviorTests
         public IReadOnlyList<AgentProfile> Search(string? query)
             => string.IsNullOrWhiteSpace(query)
                 ? profiles
-                : profiles.Where(profile => profile.Id.Contains(query, StringComparison.OrdinalIgnoreCase)).ToArray();
+                : [.. profiles.Where(profile => profile.Id.Contains(query, StringComparison.OrdinalIgnoreCase))];
     }
 }

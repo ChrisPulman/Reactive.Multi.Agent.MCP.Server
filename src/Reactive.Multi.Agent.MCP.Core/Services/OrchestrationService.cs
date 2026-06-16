@@ -19,7 +19,9 @@ public sealed class OrchestrationService(
     IAgentCatalog agentCatalog,
     IOrchestrationSessionStore sessionStore) : IOrchestrationService
 {
-    private readonly IReadOnlyDictionary<string, AgentProfile> _profiles = agentCatalog.GetAll().ToDictionary(profile => profile.Id, StringComparer.OrdinalIgnoreCase);
+    private const string OrchestratorModelRequirement = "GPT-5.5 or an equivalent highest-capacity model must own orchestration/control-plane context for this session.";
+
+    private readonly Dictionary<string, AgentProfile> _profiles = agentCatalog.GetAll().ToDictionary(profile => profile.Id, StringComparer.OrdinalIgnoreCase);
 
     public OrchestrationSession CreateSession(OrchestrationRequest request)
     {
@@ -72,7 +74,7 @@ public sealed class OrchestrationService(
     {
         var session = sessionStore.Load(sessionId)
             ?? throw new InvalidOperationException($"Unknown orchestration session '{sessionId}'.");
-        return session.MaintenanceHistory.TakeLast(Math.Max(1, limit)).ToArray();
+        return [.. session.MaintenanceHistory.TakeLast(Math.Max(1, limit))];
     }
 
     public SupervisorStatus GetSupervisorStatus(string sessionId, int stalledAfterMinutes = 30)
@@ -482,7 +484,7 @@ public sealed class OrchestrationService(
             CronSummary = cronSummary,
             Trend = trend,
             TrendSummary = trendSummary,
-            RecentHistory = session.MaintenanceHistory.TakeLast(5).ToArray(),
+            RecentHistory = [.. session.MaintenanceHistory.TakeLast(5)],
         };
     }
 
@@ -834,44 +836,50 @@ public sealed class OrchestrationService(
             AutoRetryTaskIds = autoRetryTaskIds,
             Summary = summary,
             CoordinationNotes = session.Plan.CoordinationNotes,
-            CompletedWork = completed.Select(task => (object)new
-            {
-                task.TaskId,
-                task.AgentId,
-                task.AgentName,
-                task.AgentToolName,
-                task.AgentSessionId,
-                task.Title,
-                task.PhaseName,
-                task.Status,
-                ShutdownRequired = task.Status == AgentTaskStatus.Completed || task.ShutdownRequired,
-                task.CompletedAtUtc,
-                task.LastHeartbeatUtc,
-                task.ContextWindowBudget,
-                task.SubscriptionTokenBudget,
-                task.Checkpoints,
-                task.RecoveryState,
-                task.LatestResult,
-            }).ToArray(),
-            PendingWork = pending.Select(task => (object)new
-            {
-                task.TaskId,
-                task.AgentId,
-                task.AgentName,
-                task.AgentToolName,
-                task.AgentSessionId,
-                task.Title,
-                task.PhaseName,
-                task.Status,
-                ShutdownRequired = task.Status == AgentTaskStatus.Completed || task.ShutdownRequired,
-                task.LastHeartbeatUtc,
-                task.Dependencies,
-                Ready = IsTaskReady(session, task),
-                task.ContextWindowBudget,
-                task.SubscriptionTokenBudget,
-                task.RecoveryState,
-                task.Checkpoints,
-            }).ToArray(),
+            CompletedWork =
+            [
+                .. completed.Select(task => (object)new
+                {
+                    task.TaskId,
+                    task.AgentId,
+                    task.AgentName,
+                    task.AgentToolName,
+                    task.AgentSessionId,
+                    task.Title,
+                    task.PhaseName,
+                    task.Status,
+                    ShutdownRequired = task.Status == AgentTaskStatus.Completed || task.ShutdownRequired,
+                    task.CompletedAtUtc,
+                    task.LastHeartbeatUtc,
+                    task.ContextWindowBudget,
+                    task.SubscriptionTokenBudget,
+                    task.Checkpoints,
+                    task.RecoveryState,
+                    task.LatestResult,
+                }),
+            ],
+            PendingWork =
+            [
+                .. pending.Select(task => (object)new
+                {
+                    task.TaskId,
+                    task.AgentId,
+                    task.AgentName,
+                    task.AgentToolName,
+                    task.AgentSessionId,
+                    task.Title,
+                    task.PhaseName,
+                    task.Status,
+                    ShutdownRequired = task.Status == AgentTaskStatus.Completed || task.ShutdownRequired,
+                    task.LastHeartbeatUtc,
+                    task.Dependencies,
+                    Ready = IsTaskReady(session, task),
+                    task.ContextWindowBudget,
+                    task.SubscriptionTokenBudget,
+                    task.RecoveryState,
+                    task.Checkpoints,
+                }),
+            ],
             UnifiedResponse = unified.ToString().Trim(),
             LastHeartbeatUtc = session.LastHeartbeatUtc,
         };
@@ -945,26 +953,28 @@ public sealed class OrchestrationService(
             ? AutoCompleteMatchingAction(session, "run", taskId, "Task completion satisfied the supervisor run action.")
             : session;
 
-    private static IReadOnlyList<NextTaskCandidate> BuildNextRunnableTasks(OrchestrationSession session)
-        => session.Plan.Tasks
-            .Where(task => task.Status != AgentTaskStatus.Completed)
-            .Where(task => !task.RecoveryState.NeedsResume)
-            .Where(task => IsTaskReady(session, task))
-            .OrderBy(task => task.PhaseOrder)
-            .ThenBy(task => task.SequenceOrder)
-            .Select(task => new NextTaskCandidate
-            {
-                TaskId = task.TaskId,
-                AgentId = task.AgentId,
-                AgentName = task.AgentName,
-                AgentToolName = task.AgentToolName,
-                Title = task.Title,
-                Reason = task.RecoveryState.PolicyState.AutoCheckpointRecommended
-                    ? "Task is ready but should checkpoint promptly due to policy thresholds."
-                    : "Task is ready to run with dependencies satisfied.",
-                Priority = task.PhaseOrder * 100 + task.SequenceOrder,
-            })
-            .ToArray();
+    private static NextTaskCandidate[] BuildNextRunnableTasks(OrchestrationSession session)
+        =>
+        [
+            .. session.Plan.Tasks
+                .Where(task => task.Status != AgentTaskStatus.Completed)
+                .Where(task => !task.RecoveryState.NeedsResume)
+                .Where(task => IsTaskReady(session, task))
+                .OrderBy(task => task.PhaseOrder)
+                .ThenBy(task => task.SequenceOrder)
+                .Select(task => new NextTaskCandidate
+                {
+                    TaskId = task.TaskId,
+                    AgentId = task.AgentId,
+                    AgentName = task.AgentName,
+                    AgentToolName = task.AgentToolName,
+                    Title = task.Title,
+                    Reason = task.RecoveryState.PolicyState.AutoCheckpointRecommended
+                        ? "Task is ready but should checkpoint promptly due to policy thresholds."
+                        : "Task is ready to run with dependencies satisfied.",
+                    Priority = task.PhaseOrder * 100 + task.SequenceOrder,
+                }),
+        ];
 
     private static AgentTaskPacket BuildPacket(OrchestrationSession session, AgentWorkItem task, AgentProfile profile)
     {
@@ -1019,12 +1029,13 @@ public sealed class OrchestrationService(
     private static string BuildShutdownPrompt(AgentWorkItem task)
         => $"Task '{task.TaskId}' is completed. Sub-agent '{task.AgentName}' with session '{task.AgentSessionId}' must be shut down now; do not continue work in this agent context.";
 
-    private static string BuildExecutionPrompt(OrchestrationSession session, AgentWorkItem task, AgentProfile profile, IReadOnlyList<string> blockingDependencies, AgentCheckpoint? latestCheckpoint)
+    private static string BuildExecutionPrompt(OrchestrationSession session, AgentWorkItem task, AgentProfile profile, string[] blockingDependencies, AgentCheckpoint? latestCheckpoint)
     {
         var builder = new StringBuilder();
         builder.AppendLine($"You are the {profile.DisplayName} inside the Reactive Multi Agent MCP orchestration server.");
         builder.AppendLine($"Top-level request: {session.Request.UserRequest}");
         builder.AppendLine($"Orchestration session id: {session.SessionId}");
+        builder.AppendLine($"Orchestrator model requirement: {OrchestratorModelRequirement}");
         builder.AppendLine($"Session heartbeat: {session.LastHeartbeatUtc:O}");
         builder.AppendLine($"Agent-scoped session id: {task.AgentSessionId}");
         builder.AppendLine($"Assigned objective: {task.Objective}");
@@ -1049,7 +1060,7 @@ public sealed class OrchestrationService(
         builder.AppendLine("Context:");
         builder.AppendLine(task.ContextSnapshot);
 
-        if (blockingDependencies.Count > 0)
+        if (blockingDependencies.Length > 0)
         {
             builder.AppendLine();
             builder.AppendLine($"Blocking dependencies not yet complete: {string.Join(", ", blockingDependencies)}");
@@ -1076,7 +1087,7 @@ public sealed class OrchestrationService(
         return builder.ToString().Trim();
     }
 
-    private static IReadOnlyList<string> BuildNextSteps(AgentProfile profile, AgentWorkItem task, IReadOnlyList<string> blockingDependencies, bool shutdownRequired)
+    private static List<string> BuildNextSteps(AgentProfile profile, AgentWorkItem task, string[] blockingDependencies, bool shutdownRequired)
     {
         var nextSteps = new List<string>();
         if (shutdownRequired)
@@ -1088,7 +1099,7 @@ public sealed class OrchestrationService(
         {
             nextSteps.Add($"Resume the task using persisted checkpoint memory before continuing: {task.RecoveryState.ResumeInstructions}");
         }
-        else if (blockingDependencies.Count > 0)
+        else if (blockingDependencies.Length > 0)
         {
             nextSteps.Add($"Wait for blocking dependencies to complete: {string.Join(", ", blockingDependencies)}.");
         }
@@ -1111,6 +1122,7 @@ public sealed class OrchestrationService(
         {
             nextSteps.Add("Record heartbeat updates during long-running work.");
             nextSteps.Add($"Record structured artifacts and handoff items with {profile.ToolName}.");
+            nextSteps.Add("Keep orchestration/control-plane decisions with GPT-5.5 or an equivalent highest-capacity orchestrator context.");
         }
 
         return nextSteps;
@@ -1165,7 +1177,7 @@ public sealed class OrchestrationService(
     private static bool ShouldAutoApplyDuringMaintenance(AgentWorkItem task)
         => task.RecoveryState.PolicyState.AutoCheckpointRecommended || task.RecoveryState.PolicyState.AutoRetryRecommended;
 
-    private static IReadOnlyList<string> BuildMaintenanceFindings(SupervisorStatus status, OrchestrationSummary summary, OrchestrationSession session)
+    private static string[] BuildMaintenanceFindings(SupervisorStatus status, OrchestrationSummary summary, OrchestrationSession session)
     {
         var findings = new List<string>();
         findings.AddRange(status.HeartbeatIssues.Select(issue => issue.Message));
@@ -1183,7 +1195,7 @@ public sealed class OrchestrationService(
             findings.Add("No maintenance findings.");
         }
 
-        return findings.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        return [.. findings.Distinct(StringComparer.OrdinalIgnoreCase)];
     }
 
     private static string DetermineMaintenanceVerdict(SupervisorStatus status, OrchestrationSummary summary)
@@ -1202,7 +1214,7 @@ public sealed class OrchestrationService(
         return "healthy";
     }
 
-    private static string BuildCronSummary(string sessionId, string verdict, SupervisorStatus status, OrchestrationSummary summary, IReadOnlyList<string> autoApplied)
+    private static string BuildCronSummary(string sessionId, string verdict, SupervisorStatus status, OrchestrationSummary summary, List<string> autoApplied)
     {
         var parts = new List<string>
         {
@@ -1345,7 +1357,7 @@ public sealed class OrchestrationService(
             Escalation = SupervisorActionEscalation.None,
         };
 
-    private static IReadOnlyList<SupervisorActionRecord> MergeSupervisorActions(IReadOnlyList<SupervisorActionRecord> existing, IReadOnlyList<SupervisorActionRecord> proposed)
+    private static SupervisorActionRecord[] MergeSupervisorActions(IReadOnlyList<SupervisorActionRecord> existing, IReadOnlyList<SupervisorActionRecord> proposed)
     {
         var merged = existing.ToDictionary(action => action.ActionId, StringComparer.OrdinalIgnoreCase);
         foreach (var record in proposed)
@@ -1356,7 +1368,7 @@ public sealed class OrchestrationService(
             }
         }
 
-        return merged.Values.OrderBy(action => action.ActionId, StringComparer.OrdinalIgnoreCase).ToArray();
+        return [.. merged.Values.OrderBy(action => action.ActionId, StringComparer.OrdinalIgnoreCase)];
     }
 
     private static OrchestrationResumeState BuildResumeState(OrchestrationSession session)

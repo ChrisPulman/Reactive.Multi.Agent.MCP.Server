@@ -20,6 +20,8 @@ namespace Reactive.Multi.Agent.MCP.Server.Tools;
 [McpServerToolType]
 public sealed class OrchestratorTools
 {
+    private const string OrchestratorModelRequirement = "Use GPT-5.5 or an equivalent highest-capacity model for orchestration/control-plane context so the session has maximum context capacity.";
+
     [McpServerTool(Name = "multiagent_orchestrate_request"), Description("Create a new durable orchestration session from the user's top-level request. Call this before any specialist worker agent tool because worker tools require the returned sessionId and task ids.")]
     public static string OrchestrateRequest(
         IOrchestrationService orchestrationService,
@@ -28,14 +30,17 @@ public sealed class OrchestratorTools
         [Description("Optional comma-separated desired artifacts such as source files, tests, documentation, workflows, or migration plans.")] string? desiredArtifacts = null,
         [Description("Optional comma-separated specialist agent ids to prefer during routing, such as csharp, blazor, docs, tester, or reviewer.")] string? preferredAgents = null,
         [Description("Maximum number of specialist agents that may run concurrently within an execution wave.")] int maxParallelAgents = 4)
-        => McpSafeExecutor.ExecuteJson("multiagent_orchestrate_request", () =>
-        {
-            ArgumentNullException.ThrowIfNull(orchestrationService);
-            ArgumentException.ThrowIfNullOrWhiteSpace(userRequest);
-            var session = orchestrationService.CreateSession(OrchestrationRequest.FromStrings(userRequest, constraints, desiredArtifacts, preferredAgents, maxParallelAgents));
-            var summary = orchestrationService.FinalizeSession(session.SessionId);
-            return BuildStartupPayload(session, summary);
-        });
+        => McpSafeExecutor.ExecuteJson("multiagent_orchestrate_request", () => CreateSessionStartupPayload(orchestrationService, userRequest, constraints, desiredArtifacts, preferredAgents, maxParallelAgents));
+
+    [McpServerTool(Name = "multiagent_create_session"), Description("Create a durable orchestration session from the user's request. This is an explicit alias for multiagent_orchestrate_request and is the required first write tool before any specialist worker agent call.")]
+    public static string CreateSession(
+        IOrchestrationService orchestrationService,
+        [Description("The complete top-level user request to decompose into specialist agent tasks and execution waves.")] string userRequest,
+        [Description("Optional comma-separated constraints such as target framework, package restrictions, coding style, or deployment limits.")] string? constraints = null,
+        [Description("Optional comma-separated desired artifacts such as source files, tests, documentation, workflows, or migration plans.")] string? desiredArtifacts = null,
+        [Description("Optional comma-separated specialist agent ids to prefer during routing, such as csharp, blazor, docs, tester, or reviewer.")] string? preferredAgents = null,
+        [Description("Maximum number of specialist agents that may run concurrently within an execution wave.")] int maxParallelAgents = 4)
+        => McpSafeExecutor.ExecuteJson("multiagent_create_session", () => CreateSessionStartupPayload(orchestrationService, userRequest, constraints, desiredArtifacts, preferredAgents, maxParallelAgents));
 
     [McpServerTool(Name = "multiagent_session_status")]
     public static string SessionStatus(IOrchestrationService orchestrationService, string sessionId)
@@ -263,6 +268,8 @@ public sealed class OrchestratorTools
     private static object BuildStartupPayload(OrchestrationSession session, OrchestrationSummary summary)
         => new
         {
+            sessionCreationTools = new[] { "multiagent_orchestrate_request", "multiagent_create_session" },
+            orchestratorModelRequirement = OrchestratorModelRequirement,
             sessionId = session.SessionId,
             session.CreatedAtUtc,
             session.UpdatedAtUtc,
@@ -277,8 +284,17 @@ public sealed class OrchestratorTools
             session.RecoveryGuidance,
             progress = BuildProgress(summary),
             plan = BuildPlanOverview(session.Plan),
-            nextStep = "Use multiagent_session_status for progress, then activate specialist agents for ready tasks.",
+            nextStep = "Use multiagent_session_status for progress, then activate specialist agents for ready tasks with the returned sessionId and task ids.",
         };
+
+    private static object CreateSessionStartupPayload(IOrchestrationService orchestrationService, string userRequest, string? constraints, string? desiredArtifacts, string? preferredAgents, int maxParallelAgents)
+    {
+        ArgumentNullException.ThrowIfNull(orchestrationService);
+        ArgumentException.ThrowIfNullOrWhiteSpace(userRequest);
+        var session = orchestrationService.CreateSession(OrchestrationRequest.FromStrings(userRequest, constraints, desiredArtifacts, preferredAgents, maxParallelAgents));
+        var summary = orchestrationService.FinalizeSession(session.SessionId);
+        return BuildStartupPayload(session, summary);
+    }
 
     private static object BuildProgress(OrchestrationSummary summary)
         => new

@@ -35,7 +35,7 @@ public sealed class OrchestrationRequest
             MaxParallelAgents = Math.Max(1, maxParallelAgents),
         };
 
-    private static IReadOnlyList<string> SplitCsv(string? value)
+    private static string[] SplitCsv(string? value)
         => string.IsNullOrWhiteSpace(value)
             ? []
             : value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);

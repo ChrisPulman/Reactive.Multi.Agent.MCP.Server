@@ -16,9 +16,9 @@ public class WorkerAgentAndCatalogToolsTests
     {
         var options = CreateOptions("worker-activate");
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         var task = session.Plan.Tasks.Single();
 
@@ -38,6 +38,9 @@ public class WorkerAgentAndCatalogToolsTests
         await Assert.That(lifecycleInstruction.GetString()).Contains("Spawn or continue sub-agent");
         await Assert.That(root.TryGetProperty("executionPrompt", out var prompt)).IsTrue();
         await Assert.That(string.IsNullOrWhiteSpace(prompt.GetString())).IsFalse();
+        await Assert.That(prompt.GetString()).Contains("GPT-5.5");
+        await Assert.That(root.TryGetProperty("nextSteps", out var nextSteps)).IsTrue();
+        await Assert.That(nextSteps.EnumerateArray().Select(step => step.GetString()).ToArray()).Contains("Keep orchestration/control-plane decisions with GPT-5.5 or an equivalent highest-capacity orchestrator context.");
     }
 
     [Test]
@@ -45,9 +48,9 @@ public class WorkerAgentAndCatalogToolsTests
     {
         var options = CreateOptions("worker-submit");
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         var task = session.Plan.Tasks.Single();
 
@@ -72,9 +75,9 @@ public class WorkerAgentAndCatalogToolsTests
     {
         var options = CreateOptions("worker-checkpoint");
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         var task = session.Plan.Tasks.Single();
 
@@ -95,9 +98,9 @@ public class WorkerAgentAndCatalogToolsTests
     {
         var options = CreateOptions("worker-failure");
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         var task = session.Plan.Tasks.Single();
 
@@ -121,9 +124,9 @@ public class WorkerAgentAndCatalogToolsTests
     {
         var options = CreateOptions("worker-explicit-failure-reason");
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         var task = session.Plan.Tasks.Single();
 
@@ -146,9 +149,9 @@ public class WorkerAgentAndCatalogToolsTests
     {
         var options = CreateOptions("worker-default-checkpoint-summary");
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         var task = session.Plan.Tasks.Single();
 
@@ -164,9 +167,9 @@ public class WorkerAgentAndCatalogToolsTests
     {
         var options = CreateOptions("worker-empty-collections-result");
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
         var session = orchestration.CreateSession(OrchestrationRequest.FromStrings("Build a Blazor app"));
         var task = session.Plan.Tasks.Single();
 
@@ -194,9 +197,9 @@ public class WorkerAgentAndCatalogToolsTests
     {
         var options = CreateOptions("worker-invalid-session");
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
 
         var json = WorkerAgentTools.CSharpAgent(orchestration, "missing-session", "missing-task");
 
@@ -212,9 +215,9 @@ public class WorkerAgentAndCatalogToolsTests
     {
         var options = CreateOptions("worker-operation-names");
         using var store = new SqliteOrchestrationSessionStore(options);
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
-        IRequestDecomposer decomposer = new RequestDecomposer(catalog);
-        IOrchestrationService orchestration = new OrchestrationService(decomposer, catalog, store);
+        EmbeddedAgentCatalog catalog = new();
+        RequestDecomposer decomposer = new(catalog);
+        OrchestrationService orchestration = new(decomposer, catalog, store);
 
         var agentToolCalls = new (string ExpectedOperation, Func<string> Call)[]
         {
@@ -248,7 +251,7 @@ public class WorkerAgentAndCatalogToolsTests
     [Test]
     public async Task ListCatalog_Tool_Returns_All_Agents()
     {
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
+        EmbeddedAgentCatalog catalog = new();
 
         var json = AgentCatalogTools.ListCatalog(catalog);
 
@@ -262,7 +265,7 @@ public class WorkerAgentAndCatalogToolsTests
     [Test]
     public async Task SearchCatalog_Tool_With_Query_Returns_Filtered_Results_Containing_Match()
     {
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
+        EmbeddedAgentCatalog catalog = new();
 
         var json = AgentCatalogTools.SearchCatalog(catalog, query: "avalonia");
 
@@ -285,7 +288,7 @@ public class WorkerAgentAndCatalogToolsTests
     [Test]
     public async Task SearchCatalog_Tool_Without_Query_Returns_All_Agents()
     {
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
+        EmbeddedAgentCatalog catalog = new();
 
         var json = AgentCatalogTools.SearchCatalog(catalog, query: null);
 
@@ -297,7 +300,7 @@ public class WorkerAgentAndCatalogToolsTests
     [Test]
     public async Task GetAgent_Tool_Returns_Profile_For_Valid_Id()
     {
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
+        EmbeddedAgentCatalog catalog = new();
 
         var json = AgentCatalogTools.GetAgent(catalog, "reactiveui");
 
@@ -310,7 +313,7 @@ public class WorkerAgentAndCatalogToolsTests
     [Test]
     public async Task GetAgent_Tool_Returns_Safe_Error_For_Unknown_Id()
     {
-        IAgentCatalog catalog = new EmbeddedAgentCatalog();
+        EmbeddedAgentCatalog catalog = new();
 
         var json = AgentCatalogTools.GetAgent(catalog, "nonexistent-agent-xyz");
 
